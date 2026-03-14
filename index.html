@@ -1,0 +1,2202 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DigitalAI | Болашақ мектебі</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx-preview/0.3.0/docx-preview.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Exo+2:wght@300;600&display=swap');
+        
+        :root {
+            --primary: #7c3aed;
+            --secondary: #0ea5e9;
+            --dark: #f8fafc;        /* БЫЛО: #020617 (черный). ТЕПЕРЬ: светло-серый */
+            --text-dark: #1e293b;   /* Цвет текста для светлого фона */
+        }
+
+        body {
+            background: #f8fafc;    /* Светлый фон всей страницы */
+            color: #1e293b;         /* Темный цвет текста */
+            font-family: 'Exo 2', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .cyber-font { font-family: 'Orbitron', sans-serif; }
+
+        .neon-border {
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 15px rgba(124, 58, 237, 0.5);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8); /* Белый фон с прозрачностью 80% */
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            color: #1e293b; /* Текст внутри карточек тоже темный */
+        }
+
+        .gradient-text {
+            background: linear-gradient(90deg, #a78bfa, #38bdf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .bg-pattern {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('home/bground.jpeg');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.15;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .hidden { display: none; }
+
+        /* CSS-ке мына стильді қосыңыз (шамамен жол 50-53) */
+        .topic-card h4 {
+            color: #1e293b !important;  /* Қараңғы көкшіл сұр */
+            font-weight: 600;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e1b4b; }
+        ::-webkit-scrollbar-thumb { background: #7c3aed; border-radius: 4px; }
+
+        /* Custom scrollbar for modals */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #7c3aed;
+            border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #6d28d9;
+        }
+
+        /* Test styles */
+        .option-label.selected {
+            border-color: #7c3aed;
+            background: rgba(124, 58, 237, 0.1);
+        }
+
+        .option-label.selected .option-radio {
+            border-color: #7c3aed;
+            background: #7c3aed;
+        }
+
+        .option-label.selected .option-radio div {
+            opacity: 1;
+        }
+
+        .test-progress-dot.active {
+            background: #7c3aed;
+            transform: scale(1.2);
+        }
+
+        .test-progress-dot.completed {
+            background: #10b981;
+        }
+
+        /* Task styles */
+        .task-card.completed {
+            border-left-color: #10b981;
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        /* Code editor focus */
+        textarea:focus {
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .glass-card {
+            animation: slideIn 0.5s ease-out forwards;
+        }
+
+        .glass-card:nth-child(2) { animation-delay: 0.1s; }
+        .glass-card:nth-child(3) { animation-delay: 0.2s; }
+        .glass-card:nth-child(4) { animation-delay: 0.3s; }
+        .glass-card:nth-child(5) { animation-delay: 0.4s; }
+        .glass-card:nth-child(6) { animation-delay: 0.5s; }
+
+        /* Modal background */
+        #tests-modal, #tasks-modal {
+            background: rgba(248, 250, 252, 0.95);
+            backdrop-filter: blur(8px);
+        }
+
+        /* Cyber font for titles */
+        .cyber-font {
+            font-family: 'Exo 2', sans-serif;
+            letter-spacing: 1px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="bg-glow"></div>
+    <div class="bg-pattern"></div>
+
+    <!-- Firebase Config (Simulated for demo) -->
+    <script type="module">
+    // Firebase SDK импорттау
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // СЕНІҢ FIREBASE CONFIG-ІҢ (Осы жерге өз деректеріңді қой)
+    const firebaseConfig = {
+        apiKey: "AIzaSyDPIo0D59nZNRbt2AIbrs0cT2_sKuvqMr8",
+        authDomain: "digitalai-a5a0f.firebaseapp.com",
+        projectId: "digitalai-a5a0f",
+        storageBucket: "digitalai-a5a0f.firebasestorage.app",
+        messagingSenderId: "386036967439",
+        appId: "1:386036967439:web:df9a527e761d4de042db7a",
+        measurementId: "G-3TH9JFYYF5"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // --- ТІРКЕЛУ ФУНКЦИЯСЫ ---
+    window.signUp = async (email, pass, name) => {
+        try {
+        const res = await createUserWithEmailAndPassword(auth, email, pass);
+        await setDoc(doc(db, "users", res.user.uid), {
+            username: name,
+            level: 1,
+            xp: 0,
+            completedLessons: []
+        });
+        alert("Тіркелу сәтті өтті!");
+        showPage('home');
+        } catch (err) { alert("Қате: " + err.message); }
+    };
+
+    // --- КІРУ ФУНКЦИЯСЫ ---
+    window.login = async (email, pass) => {
+        try {
+        await signInWithEmailAndPassword(auth, email, pass);
+        alert("Қош келдіңіз!");
+        showPage('home');
+        } catch (err) { alert("Қате: Деректер дұрыс емес!"); }
+    };
+
+    // --- ПАЙДАЛАНУШЫНЫ БАҚЫЛАУ ---
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+        const docRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            document.getElementById('user-display-name').innerText = data.username;
+            document.getElementById('user-level').innerText = `Level ${data.level}: Active`;
+        }
+        } else {
+        document.getElementById('user-display-name').innerText = "Қонақ";
+        }
+    });
+
+    window.logout = () => signOut(auth);
+    </script>
+
+
+    <!-- Navigation -->
+    <nav class="fixed left-0 top-0 h-full w-20 hover:w-64 transition-all duration-500 glass-card z-50 overflow-hidden group border-r border-purple-900/50">
+        <div class="flex flex-col h-full p-4 space-y-8">
+            <div class="flex items-center mb-4">
+                <i class="fas fa-microchip text-3xl text-purple-500 mr-4"></i>
+                <span class="cyber-font font-bold text-xl opacity-0 group-hover:opacity-100 transition-opacity">DigitalAI</span>
+            </div>
+            <a href="#" onclick="showPage('home')" class="flex items-center text-gray-700 hover:text-purple-700 transition">
+                <i class="fas fa-home text-2xl w-8 text-center"></i>
+                <span class="ml-4 opacity-0 group-hover:opacity-100 uppercase tracking-widest text-sm">Home</span>
+            </a>
+            <a href="#" onclick="showPage('courses')" class="flex items-center text-gray-700 hover:text-purple-700 transition">
+                <i class="fas fa-book-open text-2xl w-8 text-center"></i>
+                <span class="ml-4 opacity-0 group-hover:opacity-100 uppercase tracking-widest text-sm">Lessons</span>
+            </a>
+            <a href="#" onclick="showPage('ai')" class="flex items-center text-gray-700 hover:text-purple-700 transition">
+                <i class="fas fa-robot text-2xl w-8 text-center animate-bounce"></i>
+                <span class="ml-4 opacity-0 group-hover:opacity-100 uppercase tracking-widest text-sm">AI Көмекші</span>
+            </a>
+            <a href="#" onclick="showPage('profile')" class="flex items-center text-gray-700 hover:text-purple-700 transition">
+                <i class="fas fa-user-shield text-2xl w-8 text-center"></i>
+                <span class="ml-4 opacity-0 group-hover:opacity-100 uppercase tracking-widest text-sm">Profile</span>
+            </a>
+            <a href="javascript:void(0)" onclick="showPage('achievements')" class="flex items-center text-gray-700 hover:text-purple-700 transition">
+                <i class="fas fa-trophy text-2xl w-8 text-center"></i>
+                <span class="ml-4 opacity-0 group-hover:opacity-100 uppercase tracking-widest text-sm">Achievements</span>
+            </a>
+            <a href="javascript:void(0)" onclick="showPage('developer')" class="flex items-center text-gray-700 hover:text-purple-700 transition">
+                <i class="fas fa-user-tie text-2xl w-8 text-center"></i>
+                <span class="ml-4 opacity-0 group-hover:opacity-100 uppercase tracking-widest text-sm">Creator</span>
+            </a>
+
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="ml-24 p-8">
+        <header class="flex justify-between items-center mb-12 border-b border-purple-900/30 pb-6">
+            <div>
+                <h2 id="page-title" class="cyber-font text-3xl font-bold gradient-text uppercase">Home</h2>
+                <p class="text-gray-700">DigitalAI — Болашақ білім платформасы</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="text-right">
+                    <p id="user-display-name" class="font-bold">Қонақ</p>
+                    <p id="user-xp-display" class="text-xs text-purple-700 italic">0 XP</p>
+                </div>
+                <img src="home/profile.png" class="w-12 h-12 rounded-full border-2 border-purple-500 bg-slate-800">
+            </div>
+        </header>
+
+        <!-- Home Page -->
+        <section id="home-page" class="page-content">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
+                <div class="space-y-6">
+                    <h1 class="text-6xl font-black cyber-font leading-tight">БІЛІМДІ <br> <span class="text-purple-500">ТЕХНОЛОГИЯМЕН</span> ШЫҢДА</h1>
+                    <p class="text-gray-700 text-lg leading-relaxed">7-9 сынып бағдарламасы бойынша Python...</p>    
+                    <button onclick="showPage('courses')" class="neon-border px-10 py-4 rounded-full bg-purple-600/20 hover:bg-purple-600 transition font-bold uppercase tracking-widest">Курстарды көру</button>
+                </div>
+                <video id="myVideo" class="rounded-3xl border border-purple-500 shadow-2xl">
+                    <source src="home/home.mp4" type="video/mp4">
+                </video>
+
+                <script>
+                const video = document.getElementById("myVideo");
+                let played = false;
+
+                document.body.addEventListener("click", () => {
+                    if (!played) {
+                        video.play();   // запускаем со звуком
+                        played = true;
+                    }
+                });
+
+                video.addEventListener("ended", () => {
+                    video.currentTime = 0; // вернуть на первый кадр
+                    video.pause();
+                });
+                </script>
+            </div>
+            
+            <!-- Галерея кнопок для изображений -->
+            <div class="mt-16">
+                <h3 class="cyber-font text-2xl font-bold gradient-text mb-8 text-center">ЦИФРЛЫҚ ГАЛЕРЕЯ</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- 3D Модельдер Галереясы -->
+                    <div class="glass-card p-6 rounded-2xl hover:neon-border transition-all group">
+                        <div class="aspect-video mb-4 overflow-hidden rounded-xl">
+                            <img src="home/model3d.jpeg" class="w-full h-full object-cover" alt="3D Models">
+                        </div>
+                        <h4 class="cyber-font font-bold text-lg mb-2">3D МОДЕЛЬДЕР ГАЛЕРЕЯСЫ</h4>
+                        <p class="text-sm text-gray-600 mb-4">3D басып шығару технологиясы және заманауи жұмыстар көрмесі</p>
+                        <button onclick="showPage('model3d')" class="w-full bg-purple-600/20 hover:bg-purple-600 border border-purple-500 py-2 rounded-xl transition font-bold text-sm uppercase tracking-wider">
+                            <i class="fas fa-external-link-alt mr-2"></i>АШУ
+                        </button>
+                    </div>
+                    
+                    <!-- MAFIASERVER / CEMATOP -->
+                    <div class="glass-card p-6 rounded-2xl hover:neon-border transition-all group">
+                        <div class="aspect-video mb-4 overflow-hidden rounded-xl">
+                            <img src="home/mafia.jpeg" class="w-full h-full object-cover" alt="Mafia Server">>
+                        </div>
+                        <h4 class="cyber-font font-bold text-lg mb-2">MAFIASERVER / CEMATOP</h4>
+                        <p class="text-sm text-gray-600 mb-4">Киберстратегия, код және күрделі ойындар әлемі</p>
+                        <button onclick="showPage('mafia')" class="w-full bg-purple-600/20 hover:bg-purple-600 border border-purple-500 py-2 rounded-xl transition font-bold text-sm uppercase tracking-wider">
+                            <i class="fas fa-external-link-alt mr-2"></i>АШУ
+                        </button>
+                    </div>
+                    
+                    <!-- CODE IS CARTOON / Animation for Kids -->
+                    <div class="glass-card p-6 rounded-2xl hover:neon-border transition-all group">
+                        <div class="aspect-video mb-4 overflow-hidden rounded-xl">
+                            <img src="home/carton.jpeg" class="w-full h-full object-cover" alt="Code is Cartoon">
+                        </div>
+                        <h4 class="cyber-font font-bold text-lg mb-2">CODE IS CARTOON</h4>
+                        <p class="text-sm text-gray-600 mb-4">Балаларға арналған анимация және бағдарламалау негіздері</p>
+                        <button onclick="showPage('codecartoon')" class="w-full bg-purple-600/20 hover:bg-purple-600 border border-purple-500 py-2 rounded-xl transition font-bold text-sm uppercase tracking-wider">
+                            <i class="fas fa-external-link-alt mr-2"></i>АШУ
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+
+
+
+        </section>
+
+        <!-- Courses Page -->
+        <section id="courses-page" class="page-content hidden">
+            <div class="flex space-x-4 mb-10 overflow-x-auto pb-4">
+                <button onclick="renderLessons('7')" class="glass-card px-8 py-3 rounded-xl hover:neon-border transition font-bold uppercase">7-сынып</button>
+                <button onclick="renderLessons('8')" class="glass-card px-8 py-3 rounded-xl hover:neon-border transition font-bold uppercase">8-сынып</button>
+                <button onclick="renderLessons('9')" class="glass-card px-8 py-3 rounded-xl hover:neon-border transition font-bold uppercase">9-сынып</button>
+            </div>
+
+            <div id="lessons-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Lessons will be rendered here -->
+            </div>
+        </section>
+
+        <!-- AI Helper Page -->
+        <section id="ai-page" class="page-content hidden">
+            <div class="max-w-3xl mx-auto glass-card rounded-3xl overflow-hidden h-[600px] flex flex-col">
+                <div class="p-4 bg-purple-100 border-b border-purple-200 font-bold uppercase text-xs tracking-widest text-purple-800">CyberHelper AI Online</div>
+                <div id="ai-chat-box" class="flex-1 p-6 overflow-y-auto space-y-4 font-mono text-sm">
+                    <div class="bg-gray-100 p-3 rounded-xl rounded-tl-none w-fit border border-gray-200 text-gray-800">Сәлем! Маған Python кодын жібер, мен қатесін тексеріп беремін.</div>
+                </div>
+                <div class="p-4 bg-gray-100 flex gap-3">
+                    <input id="ai-input" type="text" class="flex-1 bg-white p-4 rounded-xl outline-none border border-gray-300 focus:border-purple-500 text-gray-800 placeholder-gray-400" placeholder="print('Hello')...">
+                    <button onclick="askAI()" class="bg-purple-600 px-6 rounded-xl hover:bg-purple-500 transition text-white"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Profile Page -->
+        <section id="profile-page" class="page-content hidden">
+            <div id="profile-login" class="max-w-md mx-auto glass-card p-8 rounded-3xl">
+                <h3 class="cyber-font text-2xl mb-8 text-center uppercase tracking-tighter">Жүйеге кіру</h3>
+                <div class="space-y-4">
+                    <input id="auth-email" type="email" placeholder="Email" class="w-full p-3 rounded-lg bg-white text-gray-900 border border-gray-300 focus:border-purple-500 placeholder-gray-400">
+                    <input id="auth-pass" type="password" placeholder="Құпия сөз" class="w-full p-3 rounded-lg bg-white text-gray-900 border border-gray-300 focus:border-purple-500 placeholder-gray-400">
+                    <input id="auth-name" type="text" placeholder="Атыңыз (тек тіркелу үшін)" class="w-full p-3 rounded-lg bg-white text-gray-900 border border-gray-300 focus:border-purple-500 placeholder-gray-400">
+
+                    <div class="flex gap-3 pt-4">
+                        <button onclick="login(document.getElementById('auth-email').value, document.getElementById('auth-pass').value)" class="flex-1 bg-blue-600 py-4 rounded-xl font-bold hover:bg-blue-500 transition uppercase text-xs">Кіру</button>
+                        <button onclick="signUp(document.getElementById('auth-email').value, document.getElementById('auth-pass').value, document.getElementById('auth-name').value)" class="flex-1 border border-purple-500 py-4 rounded-xl font-bold hover:bg-purple-600 transition uppercase text-xs">Тіркелу</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="profile-stats" class="max-w-4xl mx-auto glass-card p-8 rounded-3xl hidden">
+                <h3 class="cyber-font text-2xl mb-8 text-center uppercase">Жеке кабинет</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-purple-900/30 p-6 rounded-2xl text-center">
+                        <i class="fas fa-video text-3xl text-purple-400 mb-2"></i>
+                        <p class="text-sm text-gray-400">Қаралған видео</p>
+                        <p class="text-2xl font-bold" id="stats-videos">0</p>
+                    </div>
+                    <div class="bg-purple-900/30 p-6 rounded-2xl text-center">
+                        <i class="fas fa-star text-3xl text-yellow-400 mb-2"></i>
+                        <p class="text-sm text-gray-400">XP ұпай</p>
+                        <p class="text-2xl font-bold" id="stats-xp">0</p>
+                    </div>
+                    <div class="bg-purple-900/30 p-6 rounded-2xl text-center">
+                        <i class="fas fa-calendar text-3xl text-green-400 mb-2"></i>
+                        <p class="text-sm text-gray-400">Қатарынан күн</p>
+                        <p class="text-2xl font-bold">5</p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="w-full mt-6 text-gray-500 hover:text-red-400 text-xs uppercase tracking-widest">Шығу (Sign Out)</button>
+            </div>
+        </section>
+
+        <!-- Developer Page - Портфолио -->
+        <section id="developer-page" class="page-content hidden">
+            <div class="max-w-5xl mx-auto">
+                <!-- Басты карточка -->
+                <div class="glass-card rounded-3xl p-8 md:p-10 mb-8 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl"></div>
+                    
+                    <div class="flex flex-col md:flex-row items-center gap-8 relative z-10">
+                        <!-- Фото -->
+                        <div class="relative">
+                            <img src="home/creator.jpg" class="w-36 h-36 md:w-44 md:h-44 rounded-full border-4 border-purple-500 bg-white object-cover">
+                        </div>
+                        
+                        <div class="text-center md:text-left flex-1">
+                            <h1 class="cyber-font text-3xl md:text-4xl font-bold text-gray-800">Абилкакимова Элеонора Габдулкакимовна</h1>
+                            
+                            <div class="mt-4 space-y-2">
+                                <p class="text-lg text-purple-600 font-medium">🏫 Директордың ақпараттандыру ісі жөніндегі орынбасары</p>
+                                <p class="text-base text-gray-700">📚 Информатика пәнінің мұғалімі | Сынып жетекші</p>
+                                <p class="text-base text-gray-700">🎓 3ds Max программасын үйретуші спикер | Мобилограф</p>
+                            </div>
+
+                            <!-- Әлеуметтік желілер -->
+                            <div class="flex gap-4 mt-6 justify-center md:justify-start">
+                                <a href="https://t.me/+77014327864" class="text-2xl text-gray-600 hover:text-purple-600 transition"><i class="fab fa-telegram"></i></a>
+                                <a href="https://wa.me/77014327864" class="text-2xl text-gray-600 hover:text-blue-600 transition"><i class="fab fa-whatsapp"></i></a>
+                                <a href="https://www.instagram.com/elrysmikoali" class="text-2xl text-gray-600 hover:text-pink-600 transition"><i class="fab fa-instagram"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Қысқаша статистика / ерекшеліктер -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="glass-card p-5 rounded-2xl text-center">
+                        <div class="text-2xl font-bold text-purple-600">10+</div>
+                        <div class="text-xs text-gray-600 mt-1">Жыл тәжірибе</div>
+                    </div>
+                    <div class="glass-card p-5 rounded-2xl text-center">
+                        <div class="text-2xl font-bold text-purple-600">3ds Max</div>
+                        <div class="text-xs text-gray-600 mt-1">Спикер</div>
+                    </div>
+                    <div class="glass-card p-5 rounded-2xl text-center">
+                        <div class="text-2xl font-bold text-purple-600">5+</div>
+                        <div class="text-xs text-gray-600 mt-1">Мобилограф</div>
+                    </div>
+                    <div class="glass-card p-5 rounded-2xl text-center">
+                        <div class="text-2xl font-bold text-purple-600">100+</div>
+                        <div class="text-xs text-gray-600 mt-1">Оқушылар</div>
+                    </div>
+                </div>
+
+                <!-- Толығырақ (екі бағанды) -->
+                <div class="grid md:grid-cols-2 gap-8 mb-8">
+                    <!-- Баған 1: Міндеттері -->
+                    <div class="glass-card p-7 rounded-3xl">
+                        <h3 class="cyber-font text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <i class="fas fa-briefcase text-purple-600"></i> Қызметтік міндеттер
+                        </h3>
+                        <ul class="space-y-3 text-gray-700">
+                            <li class="flex gap-3"><i class="fas fa-check-circle text-green-500 mt-1"></i> Ақпараттандыру ісін үйлестіру</li>
+                            <li class="flex gap-3"><i class="fas fa-check-circle text-green-500 mt-1"></i> Информатика пәнінен сабақ беру</li>
+                            <li class="flex gap-3"><i class="fas fa-check-circle text-green-500 mt-1"></i> 3ds Max бағдарламасынан спикерлік</li>
+                            <li class="flex gap-3"><i class="fas fa-check-circle text-green-500 mt-1"></i> Мобилография (ұялы телефонмен түсіру)</li>
+                            <li class="flex gap-3"><i class="fas fa-check-circle text-green-500 mt-1"></i> Сынып жетекшілік</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Баған 2: Дағдылар -->
+                    <div class="glass-card p-7 rounded-3xl">
+                        <h3 class="cyber-font text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <i class="fas fa-cogs text-purple-600"></i> Кәсіби дағдылар
+                        </h3>
+                        <div class="space-y-4">
+                            <div><span class="text-gray-700 font-medium">3ds Max</span><div class="w-full bg-gray-200 rounded-full h-2 mt-1"><div class="bg-purple-600 h-2 rounded-full" style="width: 90%"></div></div></div>
+                            <div><span class="text-gray-700 font-medium">Мобилография</span><div class="w-full bg-gray-200 rounded-full h-2 mt-1"><div class="bg-purple-600 h-2 rounded-full" style="width: 85%"></div></div></div>
+                            <div><span class="text-gray-700 font-medium">Информатика</span><div class="w-full bg-gray-200 rounded-full h-2 mt-1"><div class="bg-purple-600 h-2 rounded-full" style="width: 95%"></div></div></div>
+                            <div><span class="text-gray-700 font-medium">Ұйымдастыру</span><div class="w-full bg-gray-200 rounded-full h-2 mt-1"><div class="bg-purple-600 h-2 rounded-full" style="width: 90%"></div></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ПОРТФОЛИО: ҮШ ҮЛКЕН ТОЛЫҚ БЛОК -->
+                        
+                <!-- 1. МОБИЛОГРАФИЯ - толық блок -->
+                <div class="glass-card p-8 rounded-3xl mb-8 hover:neon-border transition-all">
+                    <div class="flex items-center gap-4 mb-6 border-b border-purple-200 pb-4">
+                        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-3xl">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <div>
+                            <h2 class="cyber-font text-3xl font-bold text-gray-800">Мобилография</h2>
+                            <p class="text-gray-600">Ұялы телефонмен түсірілген кәсіби жұмыстар</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <!-- Сурет 1 -->
+                        <div class="rounded-xl overflow-hidden border-2 border-purple-200 hover:border-purple-500 transition-all">
+                            <img src="home/mob1.jpg" alt="Мобилография" class="w-full h-48 object-cover" onerror="this.style.display='none'; this.parentNode.innerHTML='<div class=\'w-full h-48 bg-gradient-to-br from-purple-100 to-cyan-100 flex items-center justify-center\'><i class=\'fas fa-camera text-5xl text-purple-400\'></i></div>'">
+                        </div>
+                        <!-- Сурет 2 -->
+                        <div class="rounded-xl overflow-hidden border-2 border-purple-200 hover:border-purple-500 transition-all">
+                            <img src="home/mob2.jpg" alt="Мобилография" class="w-full h-48 object-cover" onerror="this.style.display='none'; this.parentNode.innerHTML='<div class=\'w-full h-48 bg-gradient-to-br from-purple-100 to-cyan-100 flex items-center justify-center\'><i class=\'fas fa-video text-5xl text-purple-400\'></i></div>'">
+                        </div>
+                        <!-- Сурет 3 -->
+                        <div class="rounded-xl overflow-hidden border-2 border-purple-200 hover:border-purple-500 transition-all">
+                            <img src="home/mob3.jpg" alt="Мобилография" class="w-full h-48 object-cover" onerror="this.style.display='none'; this.parentNode.innerHTML='<div class=\'w-full h-48 bg-gradient-to-br from-purple-100 to-cyan-100 flex items-center justify-center\'><i class=\'fas fa-film text-5xl text-purple-400\'></i></div>'">
+                        </div>
+                        <!-- Сурет 4 -->
+                        <div class="rounded-xl overflow-hidden border-2 border-purple-200 hover:border-purple-500 transition-all">
+                            <img src="home/mob4.jpg" alt="Мобилография" class="w-full h-48 object-cover" onerror="this.style.display='none'; this.parentNode.innerHTML='<div class=\'w-full h-48 bg-gradient-to-br from-purple-100 to-cyan-100 flex items-center justify-center\'><i class=\'fas fa-camera-retro text-5xl text-purple-400\'></i></div>'">
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-3 mb-4">
+                        <span class="px-4 py-2 bg-purple-100 rounded-full text-purple-700 font-medium"><i class="fas fa-star mr-2"></i>15+ жұмыс</span>
+                        <span class="px-4 py-2 bg-purple-100 rounded-full text-purple-700 font-medium"><i class="fab fa-instagram mr-2"></i>Reels</span>
+                        <span class="px-4 py-2 bg-purple-100 rounded-full text-purple-700 font-medium"><i class="fas fa-video mr-2"></i>Short</span>
+                    </div>
+                    
+                </div>
+
+                <!-- 2. 3ds MAX - толық блок -->
+                <div class="glass-card p-8 rounded-3xl mb-8 hover:neon-border transition-all">
+                    <div class="flex items-center gap-4 mb-6 border-b border-purple-200 pb-4">
+                        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-3xl">
+                            <i class="fas fa-cube"></i>
+                        </div>
+                        <div>
+                            <h2 class="cyber-font text-3xl font-bold text-gray-800">3ds Max</h2>
+                            <p class="text-gray-600">3D модельдеу және визуализация</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <!-- Сурет 1 -->
+                        <div class="rounded-xl overflow-hidden border-2 border-purple-200 hover:border-purple-500 transition-all">
+                            <img src="https://lh3.googleusercontent.com/sitesv/APaQ0SQhKoIEDpMxiHgS8M60qkLVpUECDlfnnIspoOPXAmH1z6ETchO5ohNyO8pJUah_LvaQDvs4LxKCgCyrqCm7hh4rGVSroDElAtO7a61BtUW5KxfYhoLTUiBZ3b84IDaTXZ_nt0sEjAbsmitS5or4q8pgsdh4zp8Hp651zdNlLgW5JAdbF025Yo-KpVz-oAuIQebfh5UFE9lwsxRN8_NarnGsnKcfo521Qzky=w1280" alt="3D модель" class="w-full h-48 object-cover" onerror="this.style.display='none'; this.parentNode.innerHTML='<div class=\'w-full h-48 bg-gradient-to-br from-purple-100 to-cyan-100 flex items-center justify-center\'><i class=\'fas fa-cube text-5xl text-purple-400\'></i></div>'">
+                        </div>
+                        <!-- Сурет 2 -->
+                        <div class="rounded-xl overflow-hidden border-2 border-purple-200 hover:border-purple-500 transition-all">
+                            <img src="https://lh3.googleusercontent.com/sitesv/APaQ0SSRhW60oSdnbWEcV1MwzIe2Acbk6rSWqlEp_41CHBwIlIkDrpE2fjy4RV09H9LipcU2R2QB3hhYLklCsxJjECFSblSM72EjwQQ15XSu9gK7NBz58MfG3-7d65N2_A6jceZo2cN6dxXxU_why-ZaOrCjxl12qnaKyJ_vB4bD_9F1hadz3JnVzjy0593RswU2xcDShUwBqv3xDsUcMz85SmNF8COz40zwcVwi=w1280" alt="3D модель" class="w-full h-48 object-cover" onerror="this.style.display='none'; this.parentNode.innerHTML='<div class=\'w-full h-48 bg-gradient-to-br from-purple-100 to-cyan-100 flex items-center justify-center\'><i class=\'fas fa-cubes text-5xl text-purple-400\'></i></div>'">
+                        </div>
+                        <!-- Сурет 3 -->
+                        <div class="rounded-xl overflow-hidden border-2 border-purple-200 hover:border-purple-500 transition-all">
+                            <img src="https://lh3.googleusercontent.com/sitesv/APaQ0SSaTUS34cISqNp8E-diAL6ieTcTMk7R7G1z_2HcMPxb-aP3Q4U0hMcS_MlTke8r48kbXjToQ5EJzCkNuDWAxScDHRRAj_3jbp-pf13b6bEcjRpiQyWSB4mKsDp8tPxW2hiLiNafedZxQcloLNEZ_PAYuDziBsy0Qg4UcwlwCgoaxXobQuV-9trzcUSG1DfBoDijsnMNHCmj9CRgSSWUqgtbhbhlf4EU-ABiRq8=w1280" alt="3D модель" class="w-full h-48 object-cover" onerror="this.style.display='none'; this.parentNode.innerHTML='<div class=\'w-full h-48 bg-gradient-to-br from-purple-100 to-cyan-100 flex items-center justify-center\'><i class=\'fas fa-shapes text-5xl text-purple-400\'></i></div>'">
+                        </div>
+                        <!-- Сурет 4 -->
+                        <div class="rounded-xl overflow-hidden border-2 border-purple-200 hover:border-purple-500 transition-all">
+                            <img src="https://lh3.googleusercontent.com/sitesv/APaQ0STGJZIaXI14eoUpiJ4qn_cHYiNp7SSLzGNvc4fb0axQyStWb8KCQTUceCKjpSDT43adbDuS4HXqsYqdijTkbZPL3AjfWiAMD_SLSlXWHnojRTtBiQ7ANdoPghaEZew7PymCrAqVn3hfX9Tbky3mPpYd75i_OqER4eoXRcG1QpmST5AgH0oBlHxt9wmFZOi8-EYyH0goBfFd6H32rkSR0-sGDQ2L8vsUfR8t3sY=w1280" alt="3d model" class="w-full h-48 object-cover" onerror="this.style.display='none'; this.parentNode.innerHTML='<div class=\'w-full h-48 bg-gradient-to-br from-purple-100 to-cyan-100 flex items-center justify-center\'><i class=\'fas fa-shapes text-5xl text-purple-400\'></i></div>'">
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-3 mb-4">
+                        <a href="https://www.instagram.com/p/DCZu88RICbP/" class="flex items-center px-4 py-2 bg-purple-100 hover:bg-purple-600 border border-purple-200 text-purple-700 hover:text-white rounded-full font-medium transition-all duration-300 active:scale-95 shadow-sm hover:shadow-md">
+                            <i class="fab fa-instagram mr-2"></i>
+                            <span>Instagram</span>
+                        </a>
+
+                        <a href="https://sites.google.com/view/elia-portpholio/3ds-max-%D0%B1%D0%B0%D2%93%D0%B4%D0%B0%D1%80%D0%BB%D0%B0%D0%BC%D0%B0%D1%81%D1%8B" download class="flex items-center px-4 py-2 bg-purple-100 hover:bg-purple-600 border border-purple-200 text-purple-700 hover:text-white rounded-full font-medium transition-all duration-300 active:scale-95 shadow-sm hover:shadow-md">
+                            <i class="fas fa-link mr-2"></i>
+                            <span>3ds Max</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 3. ИНФОРМАТИКА - толық блок -->
+                <div class="glass-card p-8 rounded-3xl mb-8 hover:neon-border transition-all">
+                    <div class="flex items-center gap-4 mb-6 border-b border-purple-200 pb-4">
+                        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-green-500 flex items-center justify-center text-white text-3xl">
+                            <i class="fas fa-laptop-code"></i>
+                        </div>
+                        <div>
+                            <h2 class="cyber-font text-3xl font-bold text-gray-800">IT саласы</h2>
+                            <p class="text-gray-600">Оқушылармен жасалған жобалар</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <!-- Сурет 1 - Python -->
+                        <div class="rounded-xl overflow-hidden border-2 border-purple-200 hover:border-purple-500 transition-all">
+                            <img src="https://lh3.googleusercontent.com/sitesv/APaQ0SR5VoKjP3l3J_VSAjBbU9POqk68nYfKXTJm-aMJVW38OZGdLsoOkigkpXn-ZQXwh6EqdJZjC-6pQdOb7fUg2AmiaiFMieyI4Eqrp5wYEj6oTCk8AN2WzDtsZn4tqda34wrYQ_KD58fWp5ROYVdHEyXFTi2Cmhh0-y6h4DEUHvElohMa4McH0w3qbbtStG78oeYOkDa5HrGnNNYlhn8gtNXH9x5r9h1sUNHnZRY=w1280" alt="Python жобасы" class="w-full h-48 object-cover" onerror="this.style.display='none'; this.parentNode.innerHTML='<div class=\'w-full h-48 bg-gradient-to-br from-purple-100 to-cyan-100 flex items-center justify-center\'><i class=\'fab fa-python text-5xl text-purple-400\'></i></div>'">
+                        </div>
+                        <!-- Сурет 2 - Scratch -->
+                        <div class="rounded-xl overflow-hidden border-2 border-purple-200 hover:border-purple-500 transition-all">
+                            <img src="https://lh3.googleusercontent.com/sitesv/APaQ0SSOtrXAp-IcP9xfKZ3_KQvd2v58vvlPi1lUrOtsNBZj0blFwJ40czVUIV-G-jgmgflpzWJVwlaDLxLglcJCkbdLVCMHMPiKrLD-FaJ2_l4yuf3wVChBL-OpN880IB2dBFoC0BtKQeORK-GDm7BEyVBYglKb48lgHPL_xqi6GN7UD1n9B1JjTm2vRk4URXcNLve4urzSj5M7wUEarEKgWOSM-nXUoZQ58gALEvo=w1280" alt="Scratch жобасы" class="w-full h-48 object-cover" onerror="this.style.display='none'; this.parentNode.innerHTML='<div class=\'w-full h-48 bg-gradient-to-br from-purple-100 to-cyan-100 flex items-center justify-center\'><i class=\'fas fa-puzzle-piece text-5xl text-purple-400\'></i></div>'">
+                        </div>
+                        <!-- Сурет 3 - Web -->
+                        <div class="rounded-xl overflow-hidden border-2 border-purple-200 hover:border-purple-500 transition-all">
+                            <img src="https://lh3.googleusercontent.com/sitesv/APaQ0SSaGWYHoB63ZF-EOwzlOmPS7emTCwJCYg1aWSab2pYytrI19JsbBjkTc9SqGjxxLQ9zgRvLrXapxjivjkszilSwFRh1jucIPRQ2_rs_K1WaQw1hPRQTA0mE1BOhBctzNI_htWFqUpTpHLkGvEfiSi9D6cy9j5I0A3LOjII6sEbpKNoYEdu7DwZk-3Fp1yHA2AaaccoUtQenSFjHRiaU0Bjus9k9gZa3PIeeWCQ=w1280" alt="Web жобасы" class="w-full h-48 object-cover" onerror="this.style.display='none'; this.parentNode.innerHTML='<div class=\'w-full h-48 bg-gradient-to-br from-purple-100 to-cyan-100 flex items-center justify-center\'><i class=\'fas fa-globe text-5xl text-purple-400\'></i></div>'">
+                        </div>
+                        <!-- Сурет 4 - Робототехника -->
+                        <div class="rounded-xl overflow-hidden border-2 border-purple-200 hover:border-purple-500 transition-all">
+                            <img src="https://lh3.googleusercontent.com/sitesv/APaQ0SSvBJTxN8EpgUt2686ed4UaqVK34pr1y27mI4yaH414nHEsJYJHC76qN390jzJn970eKSmffuJUL7pCI7ijbliadMIYIBKr_ordXJwbkjJih46nTRCj881NPnZ1HsgCMMQhuzue__34ZVta9hHJcJ_CeN-8Ynpe4IxDfu5gGabOUkTHESJ4OOzHpckogz03cTRD4NvGMlAgHyf7ASZy_IoGY-85kDTZTANpZWo=w1280" alt="Робототехника" class="w-full h-48 object-cover" onerror="this.style.display='none'; this.parentNode.innerHTML='<div class=\'w-full h-48 bg-gradient-to-br from-purple-100 to-cyan-100 flex items-center justify-center\'><i class=\'fas fa-robot text-5xl text-purple-400\'></i></div>'">
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-3 mb-4">
+                        <a href="https://sites.google.com/view/elia-portpholio/%D1%96%D1%82-%D0%B6%D2%B1%D0%BC%D1%8B%D1%81%D1%82%D0%B0%D1%80%D1%8B%D0%BC" class="flex items-center px-4 py-2 bg-purple-100 hover:bg-purple-600 border border-purple-200 text-purple-700 hover:text-white rounded-full font-medium transition-all duration-300 active:scale-95 shadow-sm hover:shadow-md">
+                            <i class="fas fa-cube mr-2"></i>
+                            <span>IT-works</span>
+                        </a>
+
+                        <a href="#" target="_blank" class="flex items-center px-4 py-2 bg-purple-100 hover:bg-purple-600 border border-purple-200 text-purple-700 hover:text-white rounded-full font-medium transition-all duration-300 active:scale-95 shadow-sm hover:shadow-md">
+                            <i class="fas fa-microchip"></i>
+                            <span>Arduino</span>
+                        </a>
+
+                        <a href="#" target="_blank" class="flex items-center px-4 py-2 bg-purple-100 hover:bg-purple-600 border border-purple-200 text-purple-700 hover:text-white rounded-full font-medium transition-all duration-300 active:scale-95 shadow-sm hover:shadow-md">
+                            <i class="fas fa-print mr-2"></i>
+                            <span>EV3-Mindstorms</span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- 3D Models Gallery Page -->
+        <section id="model3d-page" class="page-content hidden">
+            <div class="mb-8 flex justify-between items-center">
+                <h3 class="cyber-font text-2xl font-bold gradient-text">3D МОДЕЛЬДЕР ГАЛЕРЕЯСЫ</h3>
+                <button onclick="showPage('home')" class="text-purple-600 hover:text-purple-800">
+                    <i class="fas fa-arrow-left mr-2"></i>Артқа
+                </button>
+            </div>
+            <div id="model3d-gallery" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Ячейки осында динамикалық түрде қосылады -->
+            </div>
+        </section>
+
+        <!-- Mafia Server Page -->
+        <section id="mafia-page" class="page-content hidden">
+            <div class="mb-8 flex justify-between items-center">
+                <h3 class="cyber-font text-2xl font-bold gradient-text">MAFIASERVER / CEMATOP</h3>
+                <button onclick="showPage('home')" class="text-purple-600 hover:text-purple-800">
+                    <i class="fas fa-arrow-left mr-2"></i>Артқа
+                </button>
+            </div>
+            <div id="mafia-gallery" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Ячейки осында динамикалық түрде қосылады -->
+            </div>
+        </section>
+
+        <!-- Code is Cartoon Page -->
+        <section id="codecartoon-page" class="page-content hidden">
+            <div class="mb-8 flex justify-between items-center">
+                <h3 class="cyber-font text-2xl font-bold gradient-text">CODE IS CARTOON</h3>
+                <button onclick="showPage('home')" class="text-purple-600 hover:text-purple-800">
+                    <i class="fas fa-arrow-left mr-2"></i>Артқа
+                </button>
+            </div>
+            <div id="codecartoon-gallery" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Ячейки осында динамикалық түрде қосылады -->
+            </div>
+        </section>
+
+        <!-- Achievements Page -->
+        <section id="achievements-page" class="page-content hidden">
+            <div class="mb-8 flex justify-between items-center">
+                <h3 class="cyber-font text-2xl font-bold gradient-text">ЖЕТІСТІКТЕР</h3>
+            </div>
+            <div id="achievements-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Жетістіктер осында динамикалық түрде қосылады -->
+            </div>
+        </section>
+    </div>
+
+    <!-- Video Modal -->
+    <div id="video-modal" class="fixed inset-0 z-[100] hidden bg-black/95 flex items-center justify-center p-4">
+        <div class="relative w-full max-w-4xl aspect-video glass-card rounded-2xl border-2 border-purple-500">
+            
+            <button onclick="closeVideo()" class="absolute -top-10 right-0 text-white text-4xl hover:text-red-500 transition-colors z-[110]">
+                &times;
+            </button>
+            
+            <iframe id="lesson-video-frame" class="w-full h-full rounded-xl" src="" frameborder="0" allowfullscreen></iframe>
+            
+            <div class="absolute -bottom-12 right-0">
+                <button onclick="completeLesson()" class="bg-green-600 px-6 py-2 rounded-full font-bold text-xs uppercase shadow-lg hover:bg-green-500 transition">
+                    Сабақты аяқтау +50 XP
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tests Modal -->
+    <div id="tests-modal" class="fixed inset-0 bg-black/90 backdrop-blur-sm items-center justify-center hidden z-50" onclick="if(event.target===this) closeTests()">
+        <div class="bg-gray-900/95 rounded-2xl p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-purple-500/30">
+            <div id="tests-container"></div>
+        </div>
+    </div>
+
+    <!-- Tasks Modal -->
+    <div id="tasks-modal" class="fixed inset-0 bg-black/90 backdrop-blur-sm items-center justify-center hidden z-50" onclick="if(event.target===this) closeTasks()">
+        <div class="bg-gray-900/95 rounded-2xl p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-green-500/30">
+            <div id="tasks-container"></div>
+        </div>
+    </div>
+
+    <script>
+        // YouTube video IDs from your playlists
+        const errorExplanations = {
+            "SyntaxError": "🔤 *Жазылу қатесі* - Сіз Python тілінің сөздерін дұрыс жазбадыңыз. Мысалы, 'inpat' деп жазу қате, дұрысы 'input'.",
+            "IndentationError": "📏 *Бос орын қатесі* - Python тілінде әр жолдың басындағы бос орындар маңызды. Барлық жолдар бірдей бос орыннан басталуы керек.",
+            "TabError": "⬅️ *Tab және бос орын араласқан* - Кодта Tab пернесі мен бос орын (Space) араласып кеткен. Тек біреуін ғана қолданыңыз.",
+            "NameError": "❓ *Таныс емес сөз* - Сіз жоқ айнымалыны қолдандыңыз. Мысалы, 'age' дегенді алдын ала жасамай, 'print(age)' деп жазу.",
+            "TypeError": "🔄 *Түрлер сәйкес емес* - Сан мен мәтінді біріктіруге болмайды. Мысалы, 5 + 'алма' деген қате. Санды мәтінге айналдыру керек: str(5) + 'алма'",
+            "ValueError": "🎯 *Мән дұрыс емес* - Сан күтілген жерге әріп бердіңіз. Мысалы, int('бес') деген қате, себебі 'бес' әріп, сан емес.",
+            "ZeroDivisionError": "➗ *Нөлге бөлу* - Математикада санды нөлге бөлуге болмайды. Мысалы, 10 / 0 деген қате.",
+            "IndexError": "🔢 *Тізімде жоқ элемент* - Тізімде 5 элемент бар, бірақ сіз 10-шы элементті сұрадыңыз. Тізімде неше элемент бар екенін тексеріңіз.",
+            "KeyError": "🔑 *Сөздікте жоқ кілт* - Сіз сұраған сөз сөздікте жоқ. Мысалы, сөздікте 'алма' бар, бірақ сіз 'алмұрт' сұрадыңыз.",
+            "AttributeError": "🧩 *Жоқ әдіс* - Сіз қолданған нәрседе мұндай қасиет жоқ. Мысалы, санды әріпке айналдырғыңыз келсе, саннан кейін нүкте қойып, 'сан.upper()' деп жазу қате, себебі сандарды әріпке айналдыруға болмайды.",
+            "ImportError": "📦 *Модуль жоқ* - Сіз жүктегіңіз келген кітапхана жоқ. Алдымен оны орнату керек: pip install модуль_аты",
+            "ModuleNotFoundError": "📚 *Кітапхана табылмады* - Сіз шақырған кітапхана компьютерде жоқ. Оны алдымен орнатыңыз.",
+            "FileNotFoundError": "📁 *Файл табылмады* - Сіз ашқыңыз келген файл жоқ. Файл атын дұрыс жазғаныңызды тексеріңіз.",
+            "PermissionError": "🔒 *Рұқсат жоқ* - Бұл файлды оқуға немесе өзгертуге рұқсатыңыз жоқ.",
+            "IsADirectoryError": "📂 *Бұл бума* - Сіз файл орнына буманы (папканы) ашқыңыз келді.",
+            "NotADirectoryError": "📄 *Бұл бума емес* - Сіз бума орнына файлды ашқыңыз келді.",
+            "RuntimeError": "⚡ *Жалпы қате* - Бағдарлама жұмыс істеген кезде белгісіз қате пайда болды.",
+            "RecursionError": "🔄 *Шексіз қайталау* - Бағдарлама өзін-өзі шақыра беріп, тоқтай алмай қалды. Мысалы, шексіз цикл.",
+            "OverflowError": "🔢 *Сан тым үлкен* - Сіз жазған сан компьютердің жадына сыймайтындай үлкен.",
+            "MemoryError": "💾 *Жад жеткіліксіз* - Бағдарлама тым көп жадты пайдаланды. Компьютердің жады таусылды.",
+            "AssertionError": "✅ *Тексеруден өтпеді* - 'assert' тексеруі сәтсіз аяқталды. Шарт орындалмады.",
+            "StopIteration": "⏹️ *Цикл аяқталды* - Итерациялау кезінде элементтер таусылды.",
+            "GeneratorExit": "🚪 *Генератор жабылды* - Генератор тоқтатылды.",
+            "KeyboardInterrupt": "🛑 *Қолмен тоқтату* - Бағдарламаны қолмен тоқтаттыңыз (Ctrl+C).",
+            "SystemExit": "🚪 *Бағдарлама жабылды* - Бағдарлама жұмысын аяқтады.",
+            "UnboundLocalError": "🏠 *Жергілікті айнымалы жоқ* - Функция ішіндегі айнымалыны алдын ала жасамай қолдандыңыз.",
+            "BlockingIOError": "⏳ *Күту режимі* - Файлмен жұмыс істеу кезінде кідіріс болды.",
+            "BrokenPipeError": "🔌 *Байланыс үзілді* - Деректер жіберу кезінде байланыс үзілді.",
+            "BufferError": "💫 *Буфер қатесі* - Деректерді уақытша сақтау кезінде қате пайда болды.",
+            "ChildProcessError": "👶 *Бала процесте қате* - Қосымша процесс жұмыс істегенде қате пада болды.",
+            "ConnectionError": "🌐 *Байланыс қатесі* - Интернетке қосылу кезінде қате пайда болды.",
+            "ConnectionAbortedError": "🚫 *Байланыс үзілді* - Сервермен байланыс кенеттен үзілді.",
+            "ConnectionRefusedError": "🚷 *Қосылу мүмкін емес* - Сервер қосылудан бас тартты.",
+            "ConnectionResetError": "🔄 *Байланыс қайта орнатылды* - Сервермен байланыс қайта орнатылды.",
+            "EOFError": "📭 *Деректер жоқ* - Күтілген деректер келмеді. Мысалы, input() функциясы ештеңе алмады.",
+            "FloatingPointError": "🔢 *Бөлшек сандар қатесі* - Бөлшек сандармен есептеу кезінде қате пайда болды.",
+            "InterruptedError": "✋ *Жұмыс бөлінді* - Бағдарлама жұмысы кенеттен тоқтатылды.",
+            "LookupError": "🔍 *Іздеу қатесі* - Сіз іздеген нәрсе табылмады.",
+            "OSError": "💻 *Жүйелік қате* - Компьютердің операциялық жүйесінде қате пайда болды.",
+            "ReferenceError": "🗑️ *Ескі нысан* - Сіз жойылған нәрсені қолдануға тырыстыңыз.",
+            "TimeoutError": "⏰ *Уақыт бітті* - Бағдарлама көп күтті, бірақ жауап келмеді.",
+            "UnicodeError": "🔤 *Әріптер қатесі* - Мәтінді өңдеу кезінде қате пайда болды.",
+            "UnicodeDecodeError": "📖 *Оқу қатесі* - Файлдағы мәтінді оқу мүмкін емес, әріптер дұрыс емес.",
+            "UnicodeEncodeError": "✍️ *Жазу қатесі* - Мәтінді файлға жазу мүмкін емес.",
+            "UnicodeTranslateError": "🔄 *Аудару қатесі* - Мәтінді басқа форматқа аудару мүмкін емес.",
+            "ArithmeticError": "🧮 *Математикалық қате* - Математикалық есептеулер кезінде қате пайда болды.",
+            "EnvironmentError": "🌍 *Орта қатесі* - Бағдарлама жұмыс істеп тұрған ортада қате пайда болды.",
+        };
+
+        const curriculum = {
+            '7': {
+                topics: [
+                    { 
+                        title: '4.1. Файлдармен жұмыс', 
+                        tests: [
+                            { question: 'Файл дегеніміз не?', options: ['Деректер жинағы', 'Бағдарлама', 'Процесс', 'Жад бөлігі'], correct: 0 },
+                            { question: 'Файл ашу үшін қандай функция қолданылады?', options: ['open()', 'read()', 'write()', 'close()'], correct: 0 },
+                            { question: 'Файлды оқу режимі қалай белгіленеді?', options: ['"r"', '"w"', '"a"', '"x"'], correct: 0 },
+                            { question: 'Файлды жабу функциясы?', options: ['close()', 'exit()', 'stop()', 'end()'], correct: 0 },
+                            { question: 'Файлға мәлімет жазу функциясы?', options: ['write()', 'read()', 'append()', 'input()'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Мәтіндік файл құру', description: 'Файл құрып, оған өз атыңызды жазыңыз' },
+                            { title: 'Файлды оқу', description: 'Жасалған файлды оқып, экранға шығарыңыз' }
+                        ]
+                    },
+                    { 
+                        title: '4.2. Файлдық функциялармен жұмыс',
+                        tests: [
+                            { question: 'tell() функциясы не үшін қолданылады?', options: ['Файл позициясын көрсету', 'Файл өлшемін көрсету', 'Файл атауын көрсету', 'Файл түрін көрсету'], correct: 0 },
+                            { question: 'seek() функциясы не істейді?', options: ['Курсорды жылжытады', 'Файлды іздейді', 'Файлды өшіреді', 'Файлды көшіреді'], correct: 0 },
+                            { question: 'readline() функциясы?', options: ['Бір жол оқиды', 'Барлық жолды оқиды', 'Жаңа жол қосады', 'Жолды өшіреді'], correct: 0 },
+                            { question: 'writelines() не істейді?', options: ['Тізімді жазады', 'Бір жол жазады', 'Файлды тазартады', 'Файлды жабады'], correct: 0 },
+                            { question: 'with open() не үшін қолданылады?', options: ['Автоматты жабу', 'Қолмен жабу', 'Файл тексеру', 'Қатемен жұмыс'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Файл позициясы', description: 'Файлдағы курсорды жылжытып, мәлімет оқыңыз' },
+                            { title: 'Файлды жолдармен оқу', description: 'Файлдың әр жолын нөмірлеп шығарыңыз' }
+                        ]
+                    },
+                    { 
+                        title: '4.3.-4.4. Тармақталған алгоритмдер',
+                        tests: [
+                            { question: 'Шартты операторды көрсетіңіз:', options: ['if', 'for', 'while', 'print'], correct: 0 },
+                            { question: 'elif операторы не үшін керек?', options: ['Қосымша шарт тексеру', 'Циклді тоқтату', 'Мәлімет енгізу', 'Қате шығару'], correct: 0 },
+                            { question: 'if шартынан кейін қандай таңба қойылады?', options: [':', ';', '?', '!'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Санды салыстыру', description: 'Екі сан енгізіп, олардың үлкенін анықтайтын бағдарлама жазыңыз.' }
+                        ]
+                    },
+                    { 
+                        title: '4.5. Кірістірілген шарттар',
+                        tests: [
+                            { question: 'Кірістірілген шарт деген не?', options: ['if ішіндегі if', 'Цикл ішіндегі айнымалы', 'Файл ішіндегі мәтін', 'Тізім'], correct: 0 },
+                            { question: 'Программада шегініс (indentation) не үшін маңызды?', options: ['Блоктарды ажырату', 'Әдемілік үшін', 'Жадты үнемдеу', 'Керек емес'], correct: 0 },
+                            { question: 'Үш шартты біріктіруге бола ма?', options: ['Иә', 'Жоқ', 'Тек екеуін', 'Тек біреуін'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Жас мөлшері', description: 'Пайдаланушының жасын сұрап, оның бала, жасөспірім немесе ересек екенін анықтаңыз (кірістірілген if арқылы).' }
+                        ]
+                    },
+                    { 
+                        title: '4.6. Құрамды шарттар',
+                        tests: [
+                            { question: 'Логикалық "ЖӘНЕ" операторы?', options: ['and', 'or', 'not', 'is'], correct: 0 },
+                            { question: 'Логикалық "НЕМЕСЕ" операторы?', options: ['or', 'and', 'not', 'in'], correct: 0 },
+                            { question: 'not True нәтижесі қандай?', options: ['False', 'True', 'None', 'Error'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Логикалық тексеру', description: 'Санның 10-нан үлкен және 20-дан кіші екенін тексеретін шарт жазыңыз.' }
+                        ]
+                    },
+                    { 
+                        title: '4.7. Практикалық жұмыс',
+                        tests: [
+                            { question: 'Кодтағы қатені табу қалай аталады?', options: ['Debugging', 'Coding', 'Saving', 'Running'], correct: 0 },
+                            { question: 'input() функциясы қандай тип қайтарады?', options: ['string', 'integer', 'float', 'boolean'], correct: 0 },
+                            { question: 'int() функциясы не істейді?', options: ['Санға айналдырады', 'Мәтінге айналдырады', 'Файлды ашады', 'Циклді бастайды'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Калькулятор', description: 'Екі сан және амал (+, -, *, /) енгізіп, нәтижесін шығаратын қарапайым калькулятор жасаңыз.' }
+                        ]
+                    },
+                    { 
+                        title: '4.8. Таңдауды ұйымдастыру',
+                        tests: [
+                            { question: 'Көп нұсқалы таңдауда не қолданылады?', options: ['if-elif-else', 'print', 'input', 'while'], correct: 0 },
+                            { question: 'else блогы міндетті ме?', options: ['Жоқ', 'Иә', 'Тек қате болса', 'Тек сандар үшін'], correct: 0 },
+                            { question: 'Шартта "тең" операторы қалай жазылады?', options: ['==', '=', '!=', '==='], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Апта күндері', description: '1-7 аралығында сан енгізілгенде апта күнін шығаратын бағдарлама жазыңыз.' }
+                        ]
+                    },
+                    { 
+                        title: '4.9.-4.10. Практикалық жумыс', 
+                        tests: [
+                            { question: 'Программаны орындау пернесі?', options: ['F5', 'F1', 'ESC', 'Alt+F4'], correct: 0 },
+                            { question: 'print("5" + "5") нәтижесі?', options: ['55', '10', '5', 'Error'], correct: 0 },
+                            { question: 'Айнымалы аты неден басталмауы керек?', options: ['Саннан', 'Әріптен', 'Сызықшадан', 'Бас әріптен'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Қорытынды жоба', description: 'Пайдаланушы логин мен пароль енгізіп, жүйеге кіруін тексеретін бағдарлама жазыңыз.' }
+                        ]
+                    }
+                ]
+            },
+            '8': {
+                topics: [
+                    { 
+                        title: '4.1. For циклі',
+                        tests: [
+                            { question: 'For циклі не үшін қолданылады?', options: ['Қайталау саны белгілі болғанда', 'Шарт орындалғанша', 'Тек тізімдер үшін', 'Тек сандар үшін'], correct: 0 },
+                            { question: 'range(5) қандай сандарды береді?', options: ['0, 1, 2, 3, 4', '1, 2, 3, 4, 5', '0, 5', '1, 5'], correct: 0 },
+                            { question: 'range(1, 10, 2) қадамы қанша?', options: ['2', '1', '10', '5'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Сандар тізбегі', description: '1-ден 10-ға дейінгі сандарды экранға шығарыңыз.' }
+                        ]
+                    },
+                    { 
+                        title: '4.2. Кірістірілген циклдер',
+                        tests: [
+                            { question: 'Цикл ішіндегі цикл қалай аталады?', options: ['Кірістірілген', 'Қатарлас', 'Сыртқы', 'Ішкі'], correct: 0 },
+                            { question: 'Ішкі цикл толық орындалғанда сыртқы цикл неше рет өтеді?', options: ['1 рет', 'Толық', '0 рет', 'Шексіз'], correct: 0 },
+                            { question: 'Екі For циклін қолданып не жасауға болады?', options: ['Кесте', 'Бір жол', 'Айнымалы', 'Тек қате'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Көбейту кестесі', description: 'Кірістірілген цикл арқылы 5-ке дейінгі көбейту кестесін жасаңыз.' }
+                        ]
+                    },
+                    { 
+                        title: '4.3. While циклі', 
+                        tests: [
+                            { question: 'While циклі қашан тоқтайды?', options: ['Шарт жалған болғанда', 'Шарт ақиқат болғанда', 'Бір рет орындалған соң', 'Ешқашан'], correct: 0 },
+                            { question: 'Шексіз цикл қалай пайда болады?', options: ['Шарт үнемі ақиқат болса', 'Шарт жалған болса', 'Цикл іші бос болса', 'Айнымалы көп болса'], correct: 0 },
+                            { question: 'while i < 5: шартында i=0 болса, неше рет орындалады?', options: ['5', '4', '6', '1'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Қосынды табу', description: 'Пайдаланушы 0 енгізгенше сандарды қабылдап, олардың қосындысын есептейтін бағдарлама жазыңыз.' }
+                        ]
+                    },
+                    { 
+                        title: '4.4. Continue циклін басқару', 
+                        tests: [
+                            { question: 'continue операторы не істейді?', options: ['Ағымдағы қадамды өткізіп жібереді', 'Циклді тоқтатады', 'Бағдарламадан шығады', 'Келесі жолға көшеді'], correct: 0 },
+                            { question: 'continue-дан кейінгі код орындала ма?', options: ['Жоқ', 'Иә', 'Тек бір рет', 'Қате береді'], correct: 0 },
+                            { question: 'Continue қайда қолданылады?', options: ['Цикл ішінде', 'Тек if ішінде', 'Тек файлда', 'Кез келген жерде'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Тақ сандар', description: '1-ден 10-ға дейінгі сандарды шығарыңыз, бірақ жұп сандарды continue арқылы өткізіп жіберіңіз.' }
+                        ]
+                    },
+                    { 
+                        title: '4.5. Break циклін басқару', 
+                        tests: [
+                            { question: 'break операторы не істейді?', options: ['Циклді толық тоқтатады', 'Келесі қадамға көшеді', 'Қайта басынан бастайды', 'Жадты тазартады'], correct: 0 },
+                            { question: 'Шексіз циклден қалай шығуға болады?', options: ['break арқылы', 'continue арқылы', 'print арқылы', 'pass арқылы'], correct: 0 },
+                            { question: 'break орындалғанда код қайда көшеді?', options: ['Циклден кейінгі жолға', 'Циклдің басына', 'Бағдарлама соңына', 'Ешқайда'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Санды табу', description: '1-ден 100-ге дейінгі цикл жасаңыз, егер сан 7-ге тең болса, break арқылы тоқтатыңыз.' }
+                        ]
+                    },
+                    { 
+                        title: '4.6. Else циклін басқару', 
+                        tests: [
+                            { question: 'Циклдегі else қашан орындалады?', options: ['Цикл қалыпты аяқталғанда', 'break орындалғанда', 'Қате шыққанда', 'Әрқашан'], correct: 0 },
+                            { question: 'break орындалса, else іске қосыла ма?', options: ['Жоқ', 'Иә', 'Тек while-да', 'Тек for-да'], correct: 0 },
+                            { question: 'for-else құрылымы не үшін керек?', options: ['Толық аяқталуды тексеру', 'Қайталау үшін', 'Сандарды санау үшін', 'Мәтін шығару үшін'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Тексеру алгоритмі', description: 'Тізімнен белгілі бір санды іздеңіз. Табылмаса, else арқылы "Табылмады" деген хабарлама шығарыңыз.' }
+                        ]
+                    },
+                    { 
+                        title: '4.7. Алгоритмнің трассировкасы',
+                        tests: [
+                            { question: 'Трассировка деген не?', options: ['Кодты қадам бойынша тексеру', 'Кодты тез орындау', 'Кодты файлға сақтау', 'Кодты өшіру'], correct: 0 },
+                            { question: 'Трассировка кестесіне не жазылады?', options: ['Айнымалы мәндері', 'Код авторлары', 'Файл аттары', 'Түстер'], correct: 0 },
+                            { question: 'Трассировка не үшін қажет?', options: ['Логикалық қатені табу', 'Стильді жақсарту', 'Жылдамдықты арттыру', 'Сурет салу'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Трассировка жасау', description: 'Берілген циклдің әр қадамындағы i және sum айнымалыларының мәнін кестеге жазыңыз.' }
+                        ]
+                    },
+                    { 
+                        title: '4.8-4.9. Программалауды үйренейік', 
+                        tests: [
+                            { question: 'Программаның тиімділігі неде?', options: ['Жад пен уақытты үнемдеуде', 'Кодтың ұзындығында', 'Түстердің көптігінде', 'Файл санында'], correct: 0 },
+                            { question: 'Рефакторинг деген не?', options: ['Кодты жақсарту', 'Кодты өшіру', 'Жаңа программа', 'Ойын ойнау'], correct: 0 },
+                            { question: 'Python тіліндегі комментарий белгісі?', options: ['#', '//', '/*', '---'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Фибоначчи сандары', description: 'Цикл арқылы алғашқы 10 Фибоначчи санын шығаратын программа жазыңыз.' }
+                        ]
+                    }
+                ]
+            },
+            '9': {
+                topics: [
+                    { 
+                        title: '4.1. Бір өлшемді массив', 
+                        tests: [
+                            { question: 'Массив дегеніміз не?', options: ['Бір типті деректер тізбегі', 'Кез келген деректер', 'Айнымалы', 'Функция'], correct: 0 },
+                            { question: 'Массивтің бірінші элементінің индексі?', options: ['0', '1', '-1', 'any'], correct: 0 },
+                            { question: 'len(massiv) не қайтарады?', options: ['Ұзындығын', 'Бірінші элементті', 'Соңғы элементті', 'Қосындысын'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Массив құру', description: '5 саннан тұратын массив құрып, оның қосындысын табыңыз.' }
+                        ]
+                    },
+                    { 
+                        title: '4.2. Деректерді енгізу және шығару', 
+                        tests: [
+                            { question: 'Массивке элемент қосу функциясы?', options: ['append()', 'add()', 'insert()', 'push()'], correct: 0 },
+                            { question: 'Массивті бос күйде қалай жариялайды?', options: ['a = []', 'a = {}', 'a = ()', 'a = 0'], correct: 0 },
+                            { question: 'split() функциясы не істейді?', options: ['Мәтінді тізімге айналдырады', 'Санды қосады', 'Массивті өшіреді', 'Сұрыптайды'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Енгізу', description: 'Пайдаланушыдан бір жолда бос орынмен жазылған сандарды алып, оларды массивке сақтаңыз.' }
+                        ]
+                    },
+                    { 
+                        title: '4.3. Белгіленген элементті іздеу', 
+                        tests: [
+                            { question: 'Элементтің индексін табу функциясы?', options: ['index()', 'find()', 'search()', 'get()'], correct: 0 },
+                            { question: 'Массивте элемент бар-жоғын қалай тексереді?', options: ['in операторымен', 'for-мен', 'if-пен', 'Тексеру мүмкін емес'], correct: 0 },
+                            { question: 'count() не үшін керек?', options: ['Элемент санын санау', 'Өшіру', 'Қосу', 'Ауыстыру'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Максимумды табу', description: 'Массивтегі ең үлкен элементті және оның индексін табыңыз.' }
+                        ]
+                    },
+                    { 
+                        title: '4.4. Есептер шешу', 
+                        id: 'N6O7P8Q9R0S',
+                        tests: [
+                            { question: 'Массивтің орташа мәнін қалай табады?', options: ['sum/len', 'sum*len', 'max-min', 'len/sum'], correct: 0 },
+                            { question: 'Теріс элементтерді қалай табуға болады?', options: ['if i < 0', 'if i > 0', 'if i == 0', 'if i != 0'], correct: 0 },
+                            { question: 'Тізімді кері айналдыру?', options: ['reverse()', 'sort()', 'clear()', 'copy()'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Жұп элементтер', description: 'Массивтегі тек жұп сандарды бөлек тізімге жазып шығарыңыз.' }
+                        ]
+                    },
+                    { 
+                        title: '4.5. Элементтердің орындарын ауыстыру', 
+                        tests: [
+                            { question: 'a, b = b, a амалы не істейді?', options: ['Мәндерін ауыстырады', 'Қосады', 'Өшіреді', 'Теңестіреді'], correct: 0 },
+                            { question: 'Үшінші айнымалы арқылы ауыстыру үшін неше қадам керек?', options: ['3', '2', '4', '1'], correct: 0 },
+                            { question: 'Массивтің шеткі элементтерін қалай ауыстырады?', options: ['a[0], a[-1] = a[-1], a[0]', 'a[1] = a[2]', 'swap(a)', 'move(a)'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Swap', description: 'Массивтегі ең үлкен және ең кіші элементтердің орындарын ауыстырыңыз.' }
+                        ]
+                    },
+                    { 
+                        title: '4.6. Сұрыптау', 
+                        tests: [
+                            { question: 'Өсу ретімен сұрыптау функциясы?', options: ['sort()', 'sorted()', 'reverse()', 'min()'], correct: 0 },
+                            { question: 'Кему ретімен сұрыптау қалай жазылады?', options: ['sort(reverse=True)', 'sort(down)', 'sort(back)', 'sort()'], correct: 0 },
+                            { question: 'Сұрыптау алгоритмдерінің түрі:', options: ['Көпіршікті (Bubble)', 'Тізбекті', 'Сызықты', 'Қате'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Сұрыптау', description: 'Кездейсоқ 10 саннан тұратын массивті өсу ретімен сұрыптап шығарыңыз.' }
+                        ]
+                    },
+                    { 
+                        title: '4.7. Элементті өшіру және қою', 
+                        tests: [
+                            { question: 'Элементті индексі бойынша өшіру?', options: ['pop()', 'remove()', 'del', 'clear()'], correct: 0 },
+                            { question: 'Нақты мәні бойынша өшіру?', options: ['remove()', 'pop()', 'del', 'delete()'], correct: 0 },
+                            { question: 'Белгілі бір орынға элемент қосу?', options: ['insert()', 'append()', 'extend()', 'add()'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Редактор', description: 'Массивтің 3-ші индексіне "100" санын қосып, соңғы элементін өшіріңіз.' }
+                        ]
+                    },
+                    { 
+                        title: '4.8. Екі өлшемді массив',
+                        tests: [
+                            { question: 'Екі өлшемді массив деген не?', options: ['Матрица (тізім ішіндегі тізім)', 'Қарапайым тізім', 'Мәтін', 'Файл'], correct: 0 },
+                            { question: 'a[1][2] нені білдіреді?', options: ['2-жол, 3-баған', '1-жол, 2-баған', '2-жол, 2-баған', 'Қате'], correct: 0 },
+                            { question: 'Матрицаны шығару үшін неше цикл керек?', options: ['2', '1', '3', '0'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Матрица', description: '3х3 көлемді нөлдерден тұратын матрица құрыңыз.' }
+                        ]
+                    },
+                    { 
+                        title: '4.9. Екі өлшемді массивтің параметрлері', 
+                        tests: [
+                            { question: 'Матрицаның жол санын қалай табады?', options: ['len(a)', 'len(a[0])', 'size(a)', 'count(a)'], correct: 0 },
+                            { question: 'Матрицаның баған санын қалай табады?', options: ['len(a[0])', 'len(a)', 'width(a)', 'col(a)'], correct: 0 },
+                            { question: 'Диагональ элементтерін қалай табады?', options: ['if i == j', 'if i > j', 'if i < j', 'if i != j'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Диагональ', description: 'Квадрат матрицаның басты диагоналінде жатқан элементтерді экранға шығарыңыз.' }
+                        ]
+                    },
+                    { 
+                        title: '4.10. Шығармашылық-практикалық жұмыс', 
+                        tests: [
+                            { question: 'Программаның интерфейсі деген не?', options: ['Пайдаланушымен байланыс түрі', 'Кодтың ішкі құрылымы', 'Жадтағы орын', 'Қателер тізімі'], correct: 0 },
+                            { question: 'Тізімдермен жұмыс істеу не үшін тиімді?', options: ['Деректерді жүйелеу үшін', 'Тез өшіру үшін', 'Ойын ойнау үшін', 'Керек емес'], correct: 0 },
+                            { question: 'Python-да массивтермен жұмыс істейтін кітапхана?', options: ['numpy', 'math', 'random', 'time'], correct: 0 }
+                        ],
+                        tasks: [
+                            { title: 'Жоба', description: 'Студенттердің бағаларын сақтайтын және орташа балын есептейтін екі өлшемді массив негізінде журнал жасаңыз.' }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        function showPage(id) {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+            document.getElementById(id + '-page').classList.remove('hidden');
+            document.getElementById('page-title').innerText = 
+                id === 'home' ? 'Home' : 
+                id === 'courses' ? 'Lessons' :
+                id === 'ai' ? 'AI Көмекші' : 
+                id === 'profile' ? 'Profile' : 
+                id === 'developer' ? 'Creator' :
+                id === 'model3d' ? '3D Gallery': 'Home';
+            
+            if (id === 'profile') {
+                const user = dbSim.currentUser ? dbSim.users[dbSim.currentUser] : null;
+                if (user) {
+                    document.getElementById('profile-login').classList.add('hidden');
+                    document.getElementById('profile-stats').classList.remove('hidden');
+                    document.getElementById('stats-videos').innerText = user.completedLessons.length || 0;
+                    document.getElementById('stats-xp').innerText = user.xp || 0;
+                } else {
+                    document.getElementById('profile-login').classList.remove('hidden');
+                    document.getElementById('profile-stats').classList.add('hidden');
+                }
+            }
+        }
+
+        function renderLessons(grade) {
+            const container = document.getElementById('lessons-container');
+            const data = curriculum[grade];
+            
+            let html = `<div class="col-span-full mb-4 flex justify-between items-center">
+                <h3 class="cyber-font text-purple-400">${grade}-СЫНЫП САБАҚТАРЫ</h3>
+            </div>`;
+            
+            data.topics.forEach((topic, index) => {
+                html += `
+                    <div class="topic-card glass-card p-6 rounded-2xl transition-all group border-l-4 border-transparent hover:border-purple-500">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <span class="text-xs text-purple-500 font-mono">№${index + 1}</span>
+                                <h4 class="font-bold text-gray-200 mt-1">${topic.title}</h4>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-2 mt-3">
+                            <button onclick="showTests('${grade}', ${index})" class="flex-1 bg-blue-600/20 text-blue-500 border border-blue-500/40 px-3 py-2 rounded-xl hover:bg-blue-600 hover:text-white transition text-xs font-bold">
+                                <i class="fas fa-question-circle"></i> Тест (5)
+                            </button>
+                            <button onclick="showTasks('${grade}', ${index})" class="flex-1 bg-green-600/20 text-green-500 border border-green-500/40 px-3 py-2 rounded-xl hover:bg-green-600 hover:text-white transition text-xs font-bold">
+                                <i class="fas fa-tasks"></i> Практика (2)
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function getSmartAnalysis(err) {
+            let errMsg = err.message;
+            let foundError = "🤔 **Белгісіз қате**: Бұл қате туралы қосымша ақпаратым жоқ, бірақ кодты қайта тексеріп көріңіз.";
+
+            // Қате түрін анықтау (SyntaxError, NameError, т.б.)
+            for (let type in errorExplanations) {
+                if (errMsg.includes(type)) {
+                    foundError = errorExplanations[type];
+                    break;
+                }
+            }
+
+            // Қате кеткен жолды анықтау (Line number)
+            let lineMatch = errMsg.match(/line (\d+)/);
+            let lineInfo = lineMatch ? `\n\n📍 **Қате жол:** ${lineMatch[1]}` : "";
+
+            return `${foundError}${lineInfo}`;
+        }
+
+        function showTests(grade, topicIndex) {
+            const topic = curriculum[grade].topics[topicIndex];
+            const modal = document.getElementById('tests-modal');
+            const container = document.getElementById('tests-container');
+            
+            let html = `
+                <div class="relative">
+                    <!-- Header with cyber style -->
+                    <div class="flex items-center justify-between mb-8 border-b border-purple-500/20 pb-4">
+                        <div>
+                            <span class="text-sm text-purple-500 cyber-font tracking-wider">ТЕСТІЛЕУ</span>
+                            <h3 class="text-3xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent mt-1 cyber-font">
+                                ${topic.title}
+                            </h3>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="flex gap-1">
+                                ${topic.tests.map((_, i) => `
+                                    <div class="w-2 h-2 rounded-full bg-purple-500/30 test-progress-dot transition-all duration-300" data-dot="${i}"></div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Questions -->
+                    <div class="space-y-6 mb-8 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+            `;
+            
+            topic.tests.forEach((test, qIndex) => {
+                html += `
+                    <div class="glass-card p-6 rounded-2xl border-l-4 border-transparent hover:border-purple-500 transition-all duration-300" 
+                        data-question="${qIndex}"
+                        id="question-${qIndex}">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg shadow-lg cyber-font">
+                                ${qIndex + 1}
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-xl font-semibold text-gray-800 mb-5">${test.question}</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                `;
+                
+                test.options.forEach((opt, optIndex) => {
+                    html += `
+                        <label class="option-label relative overflow-hidden rounded-xl border-2 border-gray-300 hover:border-purple-500/50 bg-white/50 p-4 cursor-pointer transition-all duration-300 group"
+                            data-option="${optIndex}">
+                            <input type="radio" name="q${qIndex}" value="${optIndex}" class="hidden option-input">
+                            <div class="flex items-center gap-3">
+                                <div class="w-5 h-5 rounded-full border-2 border-gray-400 group-hover:border-purple-400 flex items-center justify-center option-radio transition-all">
+                                    <div class="w-2 h-2 rounded-full bg-purple-500 opacity-0 transition-opacity"></div>
+                                </div>
+                                <span class="text-gray-700 group-hover:text-gray-900 transition-colors">${opt}</span>
+                            </div>
+                            
+                            <!-- Hover effect -->
+                            <div class="absolute inset-0 bg-gradient-to-r from-purple-500/0 to-blue-500/0 group-hover:from-purple-500/5 group-hover:to-blue-500/5 transition-all duration-500 pointer-events-none"></div>
+                        </label>
+                    `;
+                });
+                
+                html += `
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                    
+                    <!-- Footer with cyber buttons -->
+                    <div class="flex items-center justify-between pt-6 border-t border-gray-300">
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2" id="test-stats">
+                                <span class="text-gray-600">Таңдалған:</span>
+                                <span class="text-purple-600 font-bold cyber-font" id="answered-count">0</span>
+                                <span class="text-gray-400">/</span>
+                                <span class="text-gray-600 font-bold cyber-font">${topic.tests.length}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-3">
+                            <button onclick="resetTests()" class="px-6 py-3 rounded-xl bg-white/80 text-gray-700 border border-gray-300 hover:border-purple-500/50 hover:bg-white transition-all duration-300 font-medium flex items-center gap-2">
+                                <i class="fas fa-redo-alt text-sm"></i>
+                                Қайта бастау
+                            </button>
+                            
+                            <button onclick="checkTests('${grade}', ${topicIndex})" class="px-8 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 transform hover:scale-105 flex items-center gap-2">
+                                <i class="fas fa-check-circle"></i>
+                                Тексеру
+                            </button>
+                            
+                            <button onclick="closeTests()" class="w-12 h-12 rounded-xl bg-white/80 text-gray-500 border border-gray-300 hover:bg-white hover:text-purple-600 transition-all duration-300 flex items-center justify-center">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Result Modal -->
+                    <div id="test-result-modal" class="hidden fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm">
+                        <div class="glass-card rounded-2xl p-8 max-w-md w-full border-l-4 border-purple-500 transform scale-0 transition-all duration-300" id="result-content">
+                            <div class="text-center">
+                                <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center" id="result-icon">
+                                    <i class="fas fa-check text-4xl text-white"></i>
+                                </div>
+                                <h4 class="text-2xl font-bold text-gray-800 mb-2 cyber-font" id="result-title">Нәтиже</h4>
+                                <p class="text-5xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent mb-4 cyber-font" id="result-score">0%</p>
+                                <p class="text-gray-600 mb-6" id="result-message"></p>
+                                <button onclick="closeResultModal()" class="px-8 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold hover:shadow-lg transition-all duration-300">
+                                    Жабу
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+            modal.classList.remove('hidden');
+            addTestEventListeners();
+        }
+
+        function showTasks(grade, topicIndex) {
+            const topic = curriculum[grade].topics[topicIndex];
+            const modal = document.getElementById('tasks-modal');
+            const container = document.getElementById('tasks-container');
+            
+            let html = `
+                <div class="relative">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between mb-8 border-b border-green-500/20 pb-4">
+                        <div>
+                            <span class="text-sm text-green-500 cyber-font tracking-wider">ПРАКТИКАЛЫҚ ЖҰМЫС</span>
+                            <h3 class="text-3xl font-bold bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent mt-1 cyber-font">
+                                ${topic.title}
+                            </h3>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="px-3 py-1 rounded-full bg-green-500/10 text-green-600 text-sm font-medium border border-green-500/30">
+                                <i class="far fa-clock mr-1"></i> 2 тапсырма
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Tasks -->
+                    <div class="space-y-8 mb-8 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+            `;
+            
+            topic.tasks.forEach((task, index) => {
+                html += `
+                    <div class="glass-card rounded-2xl border-l-4 border-transparent hover:border-green-500 transition-all duration-500 overflow-hidden group"
+                        id="task-${index}">
+                        <!-- Task Header -->
+                        <div class="bg-gradient-to-r from-white/50 to-white/30 p-5 border-b border-gray-300">
+                            <div class="flex items-center gap-4">
+                                <div class="relative">
+                                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-white font-bold text-xl shadow-lg cyber-font">
+                                        ${index + 1}
+                                    </div>
+                                    <div class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-xl font-bold text-gray-800 mb-1">${task.title}</h4>
+                                    <div class="flex items-center gap-3 text-sm">
+                                        <span class="text-green-600">
+                                            <i class="fas fa-star mr-1"></i> Қиындық: Орташа
+                                        </span>
+                                        <span class="text-gray-400">•</span>
+                                        <span class="text-gray-500">
+                                            <i class="far fa-hourglass mr-1"></i> 20 минут
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="task-status" id="task-status-${index}">
+                                    <span class="px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-600 text-sm border border-yellow-500/30">
+                                        <i class="fas fa-circle mr-1 text-xs"></i> Орындалуда
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Task Content -->
+                        <div class="p-6">
+                            <!-- Description -->
+                            <div class="mb-6 p-4 rounded-xl bg-white/50 border border-gray-300">
+                                <p class="text-gray-700 leading-relaxed">
+                                    <i class="fas fa-quote-left text-green-500 mr-2 opacity-50"></i>
+                                    ${task.description}
+                                </p>
+                            </div>
+                            
+                            <!-- Code Editor -->
+                            <div class="mb-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="text-sm font-mono text-gray-600">
+                                        <i class="fas fa-code mr-2"></i>Шешім коды:
+                                    </label>
+                                    <div class="flex gap-2">
+                                        <button onclick="formatCode('${grade}', ${topicIndex}, ${index})" class="text-xs px-2 py-1 rounded bg-white/80 text-gray-600 hover:text-purple-600 transition border border-gray-300">
+                                            <i class="fas fa-magic mr-1"></i>Форматтау
+                                        </button>
+                                        <button onclick="copyCode('${grade}', ${topicIndex}, ${index})" class="text-xs px-2 py-1 rounded bg-white/80 text-gray-600 hover:text-purple-600 transition border border-gray-300">
+                                            <i class="fas fa-copy mr-1"></i>Көшіру
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="relative">
+                                    <div class="absolute left-0 top-0 bottom-0 w-12 bg-white/50 rounded-l-xl border-r border-gray-300 flex flex-col items-center py-3 text-xs text-gray-500 font-mono">
+                                        ${Array.from({length: 8}, (_, i) => `<span class="leading-6">${i+1}</span>`).join('')}
+                                    </div>
+                                    <textarea 
+                                        placeholder="# Кодыңызды осында жазыңыз&#10;&#10;def solution():&#10;    # Тапсырманы орындау&#10;    pass" 
+                                        class="w-full h-64 bg-white/50 text-gray-800 p-3 pl-16 rounded-xl border-2 border-gray-300 focus:border-green-500 outline-none font-mono text-sm resize-none transition-all"
+                                        id="code-${grade}-${topicIndex}-${index}"
+                                        oninput="updateTaskProgress('${grade}', ${topicIndex}, ${index})"
+                                    ></textarea>
+                                </div>
+                            </div>
+                            
+                            <!-- Hints & Resources -->
+                            <div class="grid grid-cols-2 gap-3 mb-4">
+                                <button onclick="showTaskHint('${grade}', ${topicIndex}, ${index})" 
+                                        class="flex items-center gap-2 px-4 py-2 rounded-xl bg-yellow-500/10 text-yellow-600 border border-yellow-500/30 hover:bg-yellow-500/20 transition-all group">
+                                    <i class="fas fa-lightbulb group-hover:animate-pulse"></i>
+                                    <span class="text-sm">Кеңес алу</span>
+                                </button>
+                                <button onclick="showTaskExample('${grade}', ${topicIndex}, ${index})" 
+                                        class="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/30 hover:bg-blue-500/20 transition-all">
+                                    <i class="fas fa-eye"></i>
+                                    <span class="text-sm">Мысал көру</span>
+                                </button>
+                            </div>
+                            
+                            <!-- Actions -->
+                            <div class="flex gap-3">
+                                <button onclick="runTask('${grade}', ${topicIndex}, ${index})" 
+                                        class="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl font-bold hover:shadow-lg hover:shadow-green-500/30 transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center gap-2">
+                                    <i class="fas fa-play"></i>
+                                    Кодты іске қосу
+                                </button>
+                                <button onclick="checkTask('${grade}', ${topicIndex}, ${index})" 
+                                        class="flex-1 bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-3 rounded-xl font-bold hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center gap-2">
+                                    <i class="fas fa-check-double"></i>
+                                    Тексеру
+                                </button>
+                            </div>
+                            
+                            <!-- Output -->
+                            <div class="mt-4 p-4 rounded-xl bg-white/50 border border-gray-300 hidden task-output" id="output-${grade}-${topicIndex}-${index}">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <i class="fas fa-terminal text-green-500"></i>
+                                    <span class="text-sm font-mono text-gray-600">Шығару нәтижесі:</span>
+                                </div>
+                                <pre class="text-gray-700 font-mono text-sm whitespace-pre-wrap" id="output-text-${grade}-${topicIndex}-${index}"></pre>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div class="flex items-center justify-between pt-6 border-t border-gray-300">
+                        <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                <span class="text-sm text-gray-600" id="tasks-progress">0/2 орындалды</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-3">
+                            <button onclick="submitAllTasks('${grade}', ${topicIndex})" 
+                                    class="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-bold hover:shadow-lg transition-all duration-300 flex items-center gap-2">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                Барлығын жіберу
+                            </button>
+                            <button onclick="closeTasks()" 
+                                    class="w-12 h-12 rounded-xl bg-white/80 text-gray-500 border border-gray-300 hover:bg-white hover:text-purple-600 transition-all duration-300 flex items-center justify-center">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+            modal.classList.remove('hidden');
+        }
+
+        function addTestEventListeners() {
+            // Тест опцияларын таңдау
+            document.querySelectorAll('.option-label').forEach(label => {
+                label.addEventListener('click', function(e) {
+                    const radio = this.querySelector('input[type="radio"]');
+                    if (radio) {
+                        radio.checked = true;
+                        
+                        // Барлық опциялардан selected классын алу
+                        const parentQuestion = this.closest('[data-question]');
+                        parentQuestion.querySelectorAll('.option-label').forEach(l => {
+                            l.classList.remove('selected');
+                        });
+                        
+                        // Қазіргі опцияға selected классын қосу
+                        this.classList.add('selected');
+                        
+                        // Жауап берілгендерді санау
+                        updateAnsweredCount();
+                    }
+                });
+            });
+        }
+
+        function updateAnsweredCount() {
+            const totalQuestions = document.querySelectorAll('[data-question]').length;
+            const answeredQuestions = document.querySelectorAll('input[type="radio"]:checked').length;
+            const answeredSpan = document.getElementById('answered-count');
+            if (answeredSpan) {
+                answeredSpan.textContent = answeredQuestions;
+            }
+        }
+
+        function closeTests() {
+            document.getElementById('tests-modal').classList.add('hidden');
+        }
+
+        function closeTasks() {
+            document.getElementById('tasks-modal').classList.add('hidden');
+        }
+
+        function closeResultModal() {
+            const modal = document.getElementById('test-result-modal');
+            modal.classList.add('hidden');
+            
+            // Модаль жабылғанда scale классын алып тастау
+            const resultContent = document.getElementById('result-content');
+            if (resultContent) {
+                resultContent.classList.remove('scale-100');
+            }
+        }
+
+        function checkTests(grade, topicIndex) {
+            const topic = curriculum[grade].topics[topicIndex];
+            let correct = 0;
+            let total = topic.tests.length;
+            
+            for (let i = 0; i < total; i++) {
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                const questionDiv = document.querySelector(`[data-question="${i}"]`);
+                
+                // Барлық шекараларды тазалау
+                questionDiv.classList.remove('border-green-500', 'border-red-500');
+                
+                if (selected && parseInt(selected.value) === topic.tests[i].correct) {
+                    correct++;
+                    questionDiv.classList.add('border-green-500');
+                } else {
+                    questionDiv.classList.add('border-red-500');
+                }
+            }
+            
+            // Нәтижені көрсету
+            const resultModal = document.getElementById('test-result-modal');
+            const resultScore = document.getElementById('result-score');
+            const resultMessage = document.getElementById('result-message');
+            const resultTitle = document.getElementById('result-title');
+            const resultIcon = document.getElementById('result-icon');
+            
+            const percentage = Math.round(correct/total*100);
+            resultScore.textContent = percentage + '%';
+            
+            if (correct === total) {
+                resultTitle.textContent = 'Керемет!';
+                resultMessage.textContent = 'Барлық сұрақтарға дұрыс жауап бердіңіз!';
+                resultIcon.innerHTML = '<i class="fas fa-trophy text-4xl text-white"></i>';
+            } else if (percentage >= 70) {
+                resultTitle.textContent = 'Жақсы!';
+                resultMessage.textContent = `${correct}/${total} дұрыс. Жақсы нәтиже!`;
+                resultIcon.innerHTML = '<i class="fas fa-smile text-4xl text-white"></i>';
+            } else {
+                resultTitle.textContent = 'Қайталап көріңіз';
+                resultMessage.textContent = `${correct}/${total} дұрыс. Келесі жолы жақсы болады!`;
+                resultIcon.innerHTML = '<i class="fas fa-redo-alt text-4xl text-white"></i>';
+            }
+            
+            resultModal.classList.remove('hidden');
+            resultModal.querySelector('#result-content').classList.add('scale-100');
+        }
+                
+        function runTask(grade, topicIndex, taskIndex) {
+            const code = document.getElementById(`code-${grade}-${topicIndex}-${taskIndex}`).value;
+            const outputDiv = document.getElementById(`output-${grade}-${topicIndex}-${taskIndex}`);
+            const outputText = document.getElementById(`output-text-${grade}-${topicIndex}-${taskIndex}`);
+            
+            outputDiv.classList.remove('hidden');
+            outputText.textContent = 'Код жұмыс істеп жатыр... Бұл жерде Python кодының нәтижесі көрсетіледі.';
+            
+            // Бұл жерде Pyodide арқылы кодты орындау керек
+            // Қазіргі уақытта демо ретінде:
+            setTimeout(() => {
+                outputText.textContent = '✅ Код сәтті орындалды!\n' + code;
+            }, 1000);
+        }
+
+        function checkTask(grade, topicIndex, taskIndex) {
+            const taskCard = document.getElementById(`task-${taskIndex}`);
+            const statusDiv = document.getElementById(`task-status-${taskIndex}`);
+            
+            taskCard.classList.add('completed');
+            statusDiv.innerHTML = '<span class="px-3 py-1 rounded-full bg-green-500/10 text-green-600 text-sm border border-green-500/30"><i class="fas fa-check mr-1"></i> Орындалды</span>';
+            
+            // Прогресс жаңарту
+            updateTasksProgress(grade, topicIndex);
+        }
+
+        function updateTasksProgress(grade, topicIndex) {
+            const topic = curriculum[grade].topics[topicIndex];
+            let completed = 0;
+            
+            topic.tasks.forEach((_, index) => {
+                if (document.getElementById(`task-${index}`).classList.contains('completed')) {
+                    completed++;
+                }
+            });
+            
+            document.getElementById('tasks-progress').textContent = `${completed}/${topic.tasks.length} орындалды`;
+        }
+
+        function showTaskHint(grade, topicIndex, taskIndex) {
+            const topic = curriculum[grade].topics[topicIndex];
+            const task = topic.tasks[taskIndex];
+            alert(`Кеңес: ${task.title} тапсырмасын орындау үшін видеоны қайта қараңыз.`);
+        }
+
+        let pyodideReadyPromise = loadPyodide(); // Python-ды дайындау
+
+        async function askAI() {
+            const input = document.getElementById('ai-input');
+            const box = document.getElementById('ai-chat-box');
+            const code = input.value.trim();
+            
+            if(!code) return;
+
+            // Пайдаланушы коды
+            box.innerHTML += `<div class="flex justify-end"><div class="bg-purple-200 p-3 rounded-xl rounded-tr-none max-w-[80%] font-mono text-xs"><code>${code}</code></div></div>`;
+            
+            // Жүктелу индикаторы
+            const loadingId = 'loading-' + Date.now();
+            box.innerHTML += `<div id="${loadingId}" class="text-xs text-gray-200 italic">🤖 Кодты орындап жатырмын...</div>`;
+            box.scrollTop = box.scrollHeight;
+
+            try {
+                let pyodide = await pyodideReadyPromise;
+                
+                // Python-ның print() функциясын ұстап алу үшін оны қайта бағыттаймыз
+                pyodide.runPython(`
+                    import sys
+                    import io
+                    sys.stdout = io.StringIO()
+                `);
+
+                // Кодты іске қосу
+                await pyodide.runPythonAsync(code);
+                
+                // Нәтижені алу
+                let stdout = pyodide.runPython("sys.stdout.getvalue()");
+                
+                document.getElementById(loadingId).remove();
+                box.innerHTML += `
+                    <div class="flex justify-start">
+                        <div class="bg-slate-800 border border-green-500 p-3 rounded-xl rounded-tl-none text-green-400 font-mono text-xs">
+                            <p class="text-[10px] text-gray-500 mb-1">Орындау нәтижесі:</p>
+                            ${stdout || '✅ Код қатесіз орындалды (нәтиже жоқ)'}
+                        </div>
+                    </div>`;
+            } catch (err) {
+                document.getElementById(loadingId).remove();
+                
+                // Сенің ботыңдағыдай ақылды талдау:
+                const smartFeedback = getSmartAnalysis(err);
+
+                box.innerHTML += `
+                    <div class="flex justify-start">
+                        <div class="bg-gray-100 border border-red-300 p-4 rounded-xl rounded-tl-none text-red-700">
+                            <p class="text-[10px] uppercase font-bold mb-2 opacity-70 italic">🤖 DigitalAI Анализаторы:</p>
+                            <div class="text-sm leading-relaxed text-gray-800">${smartFeedback}</div>
+                            <p class="mt-3 text-[11px] text-gray-500 font-mono">Түпнұсқа қате: ${err.message.split('\n')[0]}</p>
+                        </div>
+                    </div>`;
+            }
+                        
+            box.scrollTop = box.scrollHeight;
+            input.value = "";
+        }
+        
+        // Initial render for courses
+        window.onload = function() {
+            // You can set default grade if needed
+        };
+
+        // Галерея деректері
+        const galleryData = {
+            model3d: [
+                    {
+                        type: 'image',
+                        imageUrl: '3dgallery/ayu.jpeg',
+                        title: 'Сәндік қонжық',
+                        description: 'Күрделі спиральді өрнекпен жасалған көк түсті қонжық фигурасы.',
+                        stlFile: 'bear_ornament.stl',
+                        details: 'Бұл модель 3D басып шығарудағы "ажурлы" текстура мүмкіндіктерін көрсетеді. Оқушылар үшін декоративті өнер нысаны ретінде қызықты.'
+                    },
+                    {
+                        type: 'image',
+                        imageUrl: '3dgallery/kinigi.jpeg',
+                        title: 'Мектеп пәндері жиынтығы',
+                        description: 'Негізгі мектеп пәндері бейнеленген миниатюралық кітаптар.',
+                        stlFile: 'mini_books.stl',
+                        details: 'Физика, химия, тарих және тіл сабақтарына арналған көрнекі құрал. Әр кітапта пәнге қатысты символдар мен формулалар бар.'
+                    },
+                    {
+                        type: 'image',
+                        imageUrl: '3dgallery/ulttyqgimnazia.jpeg',
+                        title: 'Гимназия ғимаратының макеті',
+                        description: 'Оқу ордасының ақ түсті архитектуралық масштабты моделі.',
+                        stlFile: 'gymnasium_model.stl',
+                        details: 'Ғимараттың П-тәрізді құрылымы, орталық күмбезі мен фасад детальдары дәлдікпен көрсетілген. Сәулет өнері мен жобалау негіздерін үйренуге арналған.'
+                    },
+                    {
+                        type: 'image',
+                        imageUrl: '3dgallery/dodek.jpeg',
+                        title: 'Геометриялық додекаэдр',
+                        description: 'Беттерінде сандары бар он екі жақты геометриялық дене.',
+                        stlFile: 'd20_dice.stl',
+                        details: 'Математика сабағында көпжақтарды зерттеуге және ықтималдықтар теориясын ойын түрінде түсіндіруге өте ыңғайлы.'
+                    },
+                    {
+                        type: 'image',
+                        imageUrl: '3dgallery/qumyra.jpeg',
+                        title: 'Дизайнерлік құмыра',
+                        description: 'Классикалық пішіндегі көк түсті заманауи ваза.',
+                        stlFile: 'blue_vase.stl',
+                        details: 'FDM технологиясының қабаттық құрылымын зерттеуге арналған нысан. Интерьер дизайны сабақтарында қолдануға болады.'
+                    },
+                    {
+                        type: 'image',
+                        imageUrl: '3dgallery/siya.jpeg',
+                        title: 'Тарихи жазу құралы',
+                        description: 'Қауырсын салынған сиясауыттың заманауи стилдегі моделі.',
+                        stlFile: 'inkwell_holder.stl',
+                        details: 'Тарих пен әдебиет сабақтарын байланыстыратын эксклюзивті жұмыс. Жазу мәдениетінің дамуын көрсетеді.'
+                    },
+                    {
+                        type: 'image',
+                        imageUrl: '3dgallery/svet.jpeg',
+                        title: 'Эдисон шамы (модель)',
+                        description: 'Сәндік спиральді сызықтары бар электр шамының макеті.',
+                        stlFile: 'lightbulb_design.stl',
+                        details: 'Физикадағы жарық көздері тақырыбына және өнеркәсіптік дизайнға арналған көрнекілік.'
+                    },
+                    {
+                        type: 'image',
+                        imageUrl: '3dgallery/piramida.jpeg',
+                        title: 'Төрт қырлы пирамида',
+                        description: 'Дұрыс геометриялық пішінді пирамида моделі.',
+                        stlFile: 'pyramid.stl',
+                        details: 'Көлем, аудан және стереометрия негіздерін түсіндіруге арналған базалық фигура.'
+                    },
+                    {
+                        type: 'image',
+                        imageUrl: '3dgallery/konus.jpeg',
+                        title: 'Геометриялық конус',
+                        description: 'Дөңгелек негізді сүйір фигура.',
+                        stlFile: 'cone.stl',
+                        details: 'Айналу денелерін зерттеуге арналған стандартты оқу үлгісі.'
+                    },
+                    {
+                        type: 'image',
+                        imageUrl: '3dgallery/kreslo.jpeg',
+                        title: 'Мини-кресло',
+                        description: 'Жиһаз дизайнының кішірейтілген көшірмесі.',
+                        stlFile: 'armchair.stl',
+                        details: 'Эргономика мен масштабтау принциптерін түсінуге көмектесетін модель.'
+                    }
+                ],
+
+            mafia: [
+                    { 
+                        type: 'image',
+                        imageUrl: 'mafiaserver/maidan.jpeg', 
+                        title: 'КИБЕРМАЙДАН АНТИВИРУС - МИССИЯСЫ', 
+                        description: 'Ойын туралы толық ақпарат',
+                        images: ['mafiaserver/maidan1.jpeg','mafiaserver/maidan2.jpeg','mafiaserver/maidan3.jpeg','mafiaserver/maidan4.jpeg','mafiaserver/maidan5.jpeg'],
+                        gameDescription: 'Бұл киберстратегия ойынында сіз хакерлер тобын басқарып, әлемді вирустардан қорғауыңыз керек. Ойын 5 деңгейден тұрады, әр деңгейде жаңа мүмкіндіктер ашылады.',
+                        pdfFile: 'mafiaserver/maidan.pdf',  // DOCX файлының жолы
+                        pdfTitle: 'Ойын ережелері мен нұсқаулық'
+                    },
+                    {
+                        type: 'image',
+                        imageUrl: 'mafiaserver/croc.jpeg',
+                        title: 'IT-Крокодил',
+                        description: 'Ойын туралы толық ақпарат',
+                        images: ['mafiaserver/croc1.jpeg'],
+                        gameDescription:'Бұл ойында балалар сөздерді айтпайды, тек қимылмен көрсетеді. Бір бала ортаға шығып, "компьютер" немесе "тышқан" деген сөзді іс-қимылмен көрсетеді, ал қалғандары табу керек. Кім көп тапса, сол жеңеді.',
+                        pdfFile:'mafiaserver/croc.pdf',
+                        pdfTitle:'Ойын ережелері мен нұсқаулық'
+                    },
+                    {
+                        type: 'image',
+                        imageUrl: 'mafiaserver/agent.jpeg',
+                        title: 'Құпия агент ойыны',
+                        description: 'Ойын туралы толық ақпарат',
+                        images: ['mafiaserver/agent1.jpeg'],
+                        gameDescription:'Бұл ойында бір бала — тыңшы. Оған жұмбақ сөз жазылған қағаз беріледі, мысалы, "робот" немесе "цикл". Тыңшы сол сөзді қимылмен көрсетеді немесе "иә/жоқ" деп қана жауап береді. Қалғандары сұрақ қойып, жұмбақ сөзді табады.',
+                        pdfFile:'mafiaserver/agent.pdf',
+                        pdfTitle:'Ойын ережелері мен нұсқаулық'
+                    }
+            ],
+            codecartoon: [
+                { 
+                    type: 'video',
+                    videoId: 'jNZwc2Yuyy0', 
+                    title: 'Спандж Бобтың жұмыс күніндегі нәтижесі', 
+                    description: 'Спандж Боб Красти Крабс мейрамханасында жұмыс істейді. Оның бір күнде жасаған бургер санына қарай кім екенін анықтаймыз.',
+                    code: `
+burger = int(input("Жасалған бургер санын енгізіңіз: "))
+if burger >= 40:
+    print("Сен Спандж Бобсың!")
+else:
+    if burger >= 25:
+        print("Сен Сквидвардсың!")
+    else:
+        print("Сен Патриксің!")`, 
+                    explanation: 'Егер бургер саны 40-тан жоғары болса, сен Спанджбобсың әйтпесе Патрик немесе Скидвардсың'
+                },
+                {
+                    type: 'video',
+                    videoId: 'D9oQjYphcnk?',
+                    title: 'Томның іс әрекеті',
+                    description: 'Том Джерриді ұстап алдыма?',
+                    code: `
+    tom_kordi = True      # Том Джерриді көрді
+    jerry_jakyn = False   # Джерри жақын емес
+    if tom_kordi:
+        if jerry_jakyn:
+            print("Том Джерриді ұстап алды")
+        else:
+            print("Том Джерриді қуады")
+    else:
+        print("Том демалып жатыр")`,
+                    explanation: 'if және else шартты операторларын қолдану'
+                },
+                {
+                    type: 'video',
+                    videoId: 'ekcoLsgEoB8',
+                    title: 'Kung-fu Panda Po',
+                    description: 'Панда По кунг-фуды өте қатты жақсы көреді. Бірақ оның қарыны ашып тұр. Ол қайда баратынын бірге анықтайық',
+                    code: `
+tandau = input("По не істейді? (жаттығу/кеспе): ")
+if tandau == "жаттығу":
+    print("По кунг-фу жаттығуын жасап жатыр!")
+else:
+    print("По дәмді кеспе жеп отыр!")`,
+                    explanation:'По-ның іс әрекетін анықта'
+                },
+                {
+                    type: 'video',
+                    videoId: 'XbaueDXk96E',
+                    title: 'Minecraft',
+                    description: 'Steve ауылын Creeper-лерден қорғау үшін, 2000 блоктан тұратын қорған салу қажет.',
+                    code: `
+blocks = 0
+for i in range(2000):
+    blocks = blocks + 1
+    print("Steve блок қойды:", blocks)
+print("Қорған дайын! Барлығы 2000 блок қойылды.")`,
+                    explanation:'Steve ауылын қорғай алды ма?'
+                }
+            ]
+        };
+
+        // Мектеп жетістіктері деректері
+        let schoolAchievements = [
+            { 
+                image: 'achi/achi1.jpeg', 
+                title: 'Atyrau Youth Hackathon', 
+                description: 'Атырау қаласында өтетін жастарға арналған инновациялық хакатон. Бұл шарада қатысушылар қысқа уақыт ішінде (әдетте 24–48 сағат) командамен бірігіп, нақты мәселелерге арналған IT-жобалар мен стартап идеяларын жасайды. Хакатонның мақсаты — жастардың технология, бағдарламалау және кәсіпкерлік саласындағы қабілеттерін дамыту және жаңа идеяларды қолдау.',
+                date: '2025 year',
+                socialLink: 'https://www.instagram.com/reel/DQrp_dejA_Y/?utm_source=ig_web_button_share_sheet&igsh=MzRlODBiNWFlZA==',
+                location: 'Atyrau Hub'
+            },
+            { 
+                image: 'achi/achi2.jpeg', 
+                title: 'AtyrauRoboPark', 
+                description: 'Әдістемелік орталық «KazRobotics» федерациясының Атырау облыстық филиалымен бірлесіп, оқушылардың шығармашылығы мен инженерлік қабілетін дамытуға бағытталған “Atyrau RoboPark” көрмесін және “Atyrau BilimTech” облыстық турнирін өткізді.',
+                date: '2025 year',
+                socialLink: 'https://www.instagram.com/reel/DJCYt9AtmFT/?igsh=MTNpMTBuZWlidWhlcg==',
+                location: 'Ulttyq Gimnasium'
+            }
+        ];
+
+        // Галереяны көрсету функциясы
+        function showGallery(pageId) {
+            const container = document.getElementById(`${pageId}-gallery`);
+            const items = galleryData[pageId] || [];
+            
+            let html = '';
+            items.forEach((item, index) => {
+                const uniqueId = `${pageId}-item-${index}`;
+                
+                html += `
+                    <div class="glass-card p-4 rounded-2xl gallery-item">
+                        <div class="aspect-video mb-3 rounded-xl overflow-hidden bg-purple-100 cursor-pointer" onclick="toggleDetails('${uniqueId}')">
+                            ${item.type === 'video' 
+                                ? `<iframe class="w-full h-full" src="https://www.youtube.com/embed/${item.videoId}" frameborder="0" allowfullscreen onclick="event.stopPropagation()"></iframe>`
+                                : `<img src="${item.imageUrl}" alt="${item.title}" style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;">`
+                            }
+                        </div>
+                        <h4 class="cyber-font font-bold text-lg mb-1">${item.title}</h4>
+                        <p class="text-sm text-gray-600 mb-2">${item.description}</p>
+                        
+                        <button onclick="toggleDetails('${uniqueId}')" class="text-purple-600 hover:text-purple-800 text-sm font-medium flex items-center gap-1 mb-2">
+                            <i class="fas fa-chevron-down" id="icon-${uniqueId}"></i>
+                            <span id="btn-text-${uniqueId}">Толығырақ</span>
+                        </button>
+                        
+                        <div id="${uniqueId}" class="hidden mt-4 pt-4 border-t border-purple-200 space-y-4">
+                            ${generateDetailsContent(pageId, item)}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function generateDetailsContent(pageId, item) {
+            if (pageId === 'model3d') {
+                return `
+                    <p class="text-gray-700">${item.details || 'Қосымша ақпарат жоқ'}</p>
+                    ${item.stlFile ? `
+                        <a href="${item.stlFile}" download class="inline-flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-xl hover:bg-purple-700 transition">
+                            <i class="fas fa-download"></i> STL файлын жүктеу
+                        </a>
+                    ` : ''}
+                `;
+            } else if (pageId === 'mafia') {
+                return `
+                    <p class="text-gray-700 mb-4">${item.gameDescription || 'Ойын туралы ақпарат жоқ'}</p>
+                    
+                    <!-- Суреттер галереясы - ASPECT RATIO BOX -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                        ${item.images ? item.images.map(img => `
+                            <div style="position: relative; width: 100%; padding-bottom: 75%; background-color: #f3f4f6; border-radius: 8px; overflow: hidden;">
+                                <img src="${img}" 
+                                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; cursor: pointer;" 
+                                    onclick="openImage('${img}')">
+                            </div>
+                        `).join('') : ''}
+                    </div>
+                    
+                    <!-- PDF файлы бөлімі -->
+                    ${item.pdfFile ? `
+                        <div class="mt-4 border-t border-purple-200 pt-4">
+                            <h5 class="font-bold text-purple-700 mb-3 flex items-center gap-2">
+                                <i class="fas fa-file-pdf text-2xl text-red-500"></i>
+                                ${item.pdfTitle || 'Құжат'}
+                            </h5>
+                            
+                            <div class="flex gap-3 mb-3">
+                                <button onclick="viewPDF('${item.pdfFile}')" class="flex-1 bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700 transition flex items-center justify-center gap-2">
+                                    <i class="fas fa-eye"></i> PDF-ті көру
+                                </button>
+                                <a href="${item.pdfFile}" download class="flex-1 bg-purple-600 text-white px-4 py-2 rounded-xl hover:bg-purple-700 transition flex items-center justify-center gap-2">
+                                    <i class="fas fa-download"></i> Жүктеу
+                                </a>
+                            </div>
+                            
+                            <!-- PDF көрсету аймағы -->
+                            <div id="pdf-viewer-${item.pdfFile.replace(/[^a-z0-9]/gi, '-')}" class="hidden mt-4 w-full border border-purple-200 rounded-xl overflow-hidden">
+                                <iframe class="w-full h-[500px] border-0" src="about:blank"></iframe>
+                            </div>
+                        </div>
+                    ` : ''}
+                `;
+            } else if (pageId === 'codecartoon') {
+                return `
+                    <p class="text-gray-700 mb-3">${item.explanation || 'Түсіндірме жоқ'}</p>
+                    <div class="bg-gray-900 rounded-xl p-4">
+                        <pre class="text-green-400 font-mono text-sm overflow-x-auto">${item.code || 'Код жоқ'}</pre>
+                        <button onclick="copyCode('${pageId}', 0)" class="mt-2 text-xs text-purple-400 hover:text-purple-300">
+                            <i class="fas fa-copy mr-1"></i>Кодты көшіру
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function toggleDetails(id) {
+            const details = document.getElementById(id);
+            const icon = document.getElementById(`icon-${id}`);
+            const btnText = document.getElementById(`btn-text-${id}`);
+            
+            if (details.classList.contains('hidden')) {
+                details.classList.remove('hidden');
+                icon.className = 'fas fa-chevron-up';
+                btnText.innerText = 'Жасыру';
+            } else {
+                details.classList.add('hidden');
+                icon.className = 'fas fa-chevron-down';
+                btnText.innerText = 'Толығырақ';
+            }
+        }
+
+        function openImage(src) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4';
+            modal.onclick = function(e) { if(e.target === modal) modal.remove(); };
+            
+            // Жаңа сурет объектісін жасап, өлшемін тексереміз
+            const img = new Image();
+            img.src = src;
+            
+            img.onload = function() {
+                const isPortrait = this.height > this.width; // Тік немесе көлденең екенін анықтау
+                
+                modal.innerHTML = `
+                    <div class="relative max-w-7xl w-full h-full flex items-center justify-center">
+                        <img src="${src}" 
+                            style="max-width: 95%; max-height: 95%; width: auto; height: auto; object-fit: contain; border-radius: 12px; box-shadow: 0 0 30px rgba(124, 58, 237, 0.5);"
+                            onclick="event.stopPropagation()">
+                        <button onclick="this.closest('.fixed').remove()" 
+                                class="absolute top-4 right-4 text-white bg-red-600 w-12 h-12 rounded-full hover:bg-red-700 flex items-center justify-center text-2xl z-10">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+            };
+            
+            document.body.appendChild(modal);
+        }
+
+
+        // Жетістіктерді көрсету
+        function showAchievements() {
+            const container = document.getElementById('achievements-container');
+            
+            let html = '';
+            schoolAchievements.forEach((item, index) => {
+                html += `
+                    <div class="glass-card p-4 rounded-2xl achievement-card relative group cursor-pointer hover:shadow-xl transition-all" onclick="showAchievementDetail(${index})">
+                        <div class="aspect-video mb-3 rounded-xl overflow-hidden bg-purple-100">
+                            ${item.type === 'video' 
+                                ? `<iframe class="w-full h-full" src="https://www.youtube.com/embed/${item.videoId}" frameborder="0" allowfullscreen onclick="event.stopPropagation()"></iframe>`
+                                : `<img src="${item.image}" alt="${item.title}" class="w-full h-full object-cover">`
+                            }
+                        </div>
+                        <h4 class="cyber-font font-bold text-lg mb-1">${item.title}</h4>
+                        <p class="text-sm text-gray-600 mb-2 line-clamp-2">${item.description}</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-purple-600">${item.date || ''}</span>
+                            <span class="text-xs bg-purple-100 px-2 py-1 rounded-full text-purple-700">Мектеп марапаты</span>
+                        </div>
+                        <button onclick="deleteAchievement(${index}); event.stopPropagation()" class="absolute top-2 right-2 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+            });
+            
+            // Жаңа қосу карточкасы
+            html += `...`; // өзгеріссіз қалады
+            
+            container.innerHTML = html;
+        }
+
+        // Жетістік детальдарын көрсету
+        function showAchievementDetail(index) {
+            const achievement = schoolAchievements[index];
+            
+            const modalHtml = `
+                <div id="achievement-modal" class="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4" onclick="if(event.target===this) closeAchievementModal()">
+                    <div class="glass-card rounded-2xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto border-2 border-purple-500">
+                        <div class="flex justify-between items-start mb-6">
+                            <h3 class="cyber-font text-3xl font-bold gradient-text">${achievement.title}</h3>
+                            <button onclick="closeAchievementModal()" class="text-gray-500 hover:text-red-500 text-3xl">&times;</button>
+                        </div>
+                        
+                        <div class="aspect-video mb-6 rounded-xl overflow-hidden bg-purple-100">
+                            ${achievement.type === 'video' 
+                                ? `<iframe class="w-full h-full" src="https://www.youtube.com/embed/${achievement.videoId}" frameborder="0" allowfullscreen></iframe>`
+                                : `<img src="${achievement.image}" alt="${achievement.title}" class="w-full h-full object-contain">`
+                            }
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="bg-purple-50 p-4 rounded-xl border-l-4 border-purple-500">
+                                <h4 class="font-bold text-purple-700 mb-2 flex items-center gap-2">
+                                    <i class="fas fa-info-circle"></i>
+                                    Жетістік туралы
+                                </h4>
+                                <p class="text-gray-700 text-lg leading-relaxed">${achievement.description}</p>
+                            </div>
+                            
+                            <div class="bg-blue-50 p-4 rounded-xl border-l-4 border-blue-500">
+                                <h4 class="font-bold text-blue-700 mb-2 flex items-center gap-2">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    Қосымша ақпарат
+                                </h4>
+                                <p class="text-gray-700">
+                                    <span class="font-medium">Күні:</span> ${achievement.date || 'Көрсетілмеген'}<br>
+                                    <span class="font-medium">Өткізілген жер:</span> ${achievement.location || 'Көрсетілмеген'}<br>
+                                </p>
+                            </div>
+                            
+                            ${achievement.socialLink ? `
+                                <div class="bg-green-50 p-4 rounded-xl border-l-4 border-green-500">
+                                    <h4 class="font-bold text-green-700 mb-2 flex items-center gap-2">
+                                        <i class="fas fa-share-alt"></i>
+                                        Әлеуметтік желі
+                                    </h4>
+                                    <a href="${achievement.socialLink}" target="_blank" 
+                                    class="text-purple-600 hover:text-purple-800 flex items-center gap-2">
+                                        <i class="fab fa-instagram text-2xl"></i>
+                                        Instagram
+                                    </a>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="flex justify-end gap-3 mt-4">
+                                <button onclick="closeAchievementModal()" 
+                                        class="px-6 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition">
+                                    Жабу
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function closeAchievementModal() {
+            const modal = document.getElementById('achievement-modal');
+            if (modal) modal.remove();
+        }
+
+        function generateDetailsContent(pageId, item) {
+            if (pageId === 'model3d') {
+                return `
+                    <p class="text-gray-700">${item.details || 'Қосымша ақпарат жоқ'}</p>
+                    ${item.stlFile ? `
+                        <a href="${item.stlFile}" download class="inline-flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-xl hover:bg-purple-700 transition">
+                            <i class="fas fa-download"></i> STL файлын жүктеу
+                        </a>
+                    ` : ''}
+                `;
+            } else if (pageId === 'mafia') {
+                return `
+                    <p class="text-gray-700 mb-4">${item.gameDescription || 'Ойын туралы ақпарат жоқ'}</p>
+                    
+                    <!-- СУРЕТТЕР - ЕШҚАНДАЙ ӨЗГЕРІССІЗ -->
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
+                        ${item.images ? item.images.map(img => `
+                            <div style="border: 1px solid #ddd; border-radius: 8px; padding: 8px; background: #f9f9f9; text-align: center;">
+                                <img src="${img}" style="width: 100%; height: auto; display: block; border-radius: 4px;" onclick="openImage('${img}')">
+                            </div>
+                        `).join('') : ''}
+                    </div>
+                    
+                    <!-- PDF файлы бөлімі -->
+                    ${item.pdfFile ? `
+                        <div class="mt-4 border-t border-purple-200 pt-4">
+                            <h5 class="font-bold text-purple-700 mb-3 flex items-center gap-2">
+                                <i class="fas fa-file-pdf text-2xl text-red-500"></i>
+                                ${item.pdfTitle || 'Құжат'}
+                            </h5>
+                            
+                            <div class="flex gap-3 mb-3">
+                                <a href="${item.pdfFile}" target="_blank" class="flex-1 bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700 transition flex items-center justify-center gap-2">
+                                    <i class="fas fa-external-link-alt"></i> PDF-ті ашу
+                                </a>
+                                <a href="${item.pdfFile}" download class="flex-1 bg-purple-600 text-white px-4 py-2 rounded-xl hover:bg-purple-700 transition flex items-center justify-center gap-2">
+                                    <i class="fas fa-download"></i> Жүктеу
+                                </a>
+                            </div>
+                        </div>
+                    ` : ''}
+                `;
+           
+            } else if (pageId === 'codecartoon') {
+                return `
+                    <p class="text-gray-700 mb-3">${item.explanation || 'Түсіндірме жоқ'}</p>
+                    <div class="bg-gray-900 rounded-xl p-4">
+                        <pre class="text-green-400 font-mono text-sm overflow-x-auto">${item.code || 'Код жоқ'}</pre>
+                        <button onclick="copyCode('${pageId}', 0)" class="mt-2 text-xs text-purple-400 hover:text-purple-300">
+                            <i class="fas fa-copy mr-1"></i>Кодты көшіру
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // PDF файлын көрсету
+        function viewPDF(filePath) {
+            const viewerId = 'pdf-viewer-' + filePath.replace(/[^a-z0-9]/gi, '-');
+            const viewer = document.getElementById(viewerId);
+            const iframe = viewer.querySelector('iframe');
+            
+            if (viewer.classList.contains('hidden')) {
+                const baseUrl = window.location.origin + '/DigitalAI/';
+                const fullPath = filePath.startsWith('http') ? filePath : baseUrl + filePath;
+                
+                iframe.src = fullPath;
+                viewer.classList.remove('hidden');
+            } else {
+                viewer.classList.add('hidden');
+                iframe.src = 'about:blank';
+            }
+        }
+
+        // showPage функциясын жаңарту
+        const originalShowPage = showPage;
+        showPage = function(id) {
+            originalShowPage(id);
+            
+            if (id === 'model3d' || id === 'mafia' || id === 'codecartoon') {
+                showGallery(id);
+            } else if (id === 'achievements') {
+                showAchievements();
+            }
+        };
+    </script>
+</body>
+</html>
